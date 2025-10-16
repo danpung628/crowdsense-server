@@ -11,6 +11,9 @@ app.use(express.json());
 const crowdRoutes = require("./src/routes/crowdRoutes");
 app.use("/api/crowds", crowdRoutes);
 
+const trafficRoutes = require("./src/routes/trafficRoutes");
+app.use("/api/traffic", trafficRoutes);
+
 // 기본 경로
 app.get("/", (req, res) => {
   res.send("CrowdSense 서버 작동중! 🚀");
