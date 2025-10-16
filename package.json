@@ -1,0 +1,26 @@
+{
+  "name": "crowdsense-server",
+  "version": "1.0.0",
+  "description": "클라우드웹서비스 CrowdSense 서버",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/danpung628/crowdsense-server.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/danpung628/crowdsense-server/issues"
+  },
+  "homepage": "https://github.com/danpung628/crowdsense-server#readme",
+  "dependencies": {
+    "axios": "^1.12.2",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0"
+  }
+}
