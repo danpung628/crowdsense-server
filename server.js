@@ -38,6 +38,9 @@ app.use("/api/traffic", trafficRoutes);
 const parkingRoutes = require("./src/routes/parkingRoutes");
 app.use("/api/parking", parkingRoutes);
 
+const testRoutes = require("./src/routes/testRoutes");
+app.use("/api/test", testRoutes);
+
 // 기본 경로
 app.get("/", (req, res) => {
   res.send("CrowdSense 서버 작동중! 🚀");
