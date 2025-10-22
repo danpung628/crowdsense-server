@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const rankingController = require("../controllers/rankingController");
+const { authenticate } = require("../middlewares/authMiddleware");
 
 /**
  * @swagger
@@ -8,6 +9,8 @@ const rankingController = require("../controllers/rankingController");
  *   get:
  *     summary: 인기 장소 랭킹 조회
  *     tags: [Rankings]
+ *     security:
+ *       - bearerAuth: []
  *     description: 평균 인구수 기준 인기 장소 랭킹을 조회합니다.
  *     parameters:
  *       - in: query
@@ -67,6 +70,12 @@ const rankingController = require("../controllers/rankingController");
  *                       avgCongestion:
  *                         type: number
  *                         example: 4.5
+ *       401:
+ *         description: 인증 실패
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       500:
  *         description: 서버 오류
  *         content:
@@ -74,7 +83,7 @@ const rankingController = require("../controllers/rankingController");
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get("/popular", rankingController.getPopularPlaces);
+router.get("/popular", authenticate, rankingController.getPopularPlaces);
 
 module.exports = router;
 

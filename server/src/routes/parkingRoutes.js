@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const parkingController = require("../controllers/parkingController");
+const { authenticate } = require("../middlewares/authMiddleware");
 
 /**
  * @swagger
@@ -8,6 +9,8 @@ const parkingController = require("../controllers/parkingController");
  *   get:
  *     summary: 전체 주차장 정보 조회
  *     tags: [Parking]
+ *     security:
+ *       - bearerAuth: []
  *     description: 서울시 전체 주차장의 실시간 가용 정보를 조회합니다.
  *     responses:
  *       200:
@@ -52,6 +55,12 @@ const parkingController = require("../controllers/parkingController");
  *                       updatedAt:
  *                         type: string
  *                         format: date-time
+ *       401:
+ *         description: 인증 실패
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       500:
  *         description: 서버 오류
  *         content:
@@ -59,7 +68,7 @@ const parkingController = require("../controllers/parkingController");
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get("/", parkingController.getAllParking);
+router.get("/", authenticate, parkingController.getAllParking);
 
 /**
  * @swagger
@@ -67,6 +76,8 @@ router.get("/", parkingController.getAllParking);
  *   get:
  *     summary: 주변 주차장 추천
  *     tags: [Parking]
+ *     security:
+ *       - bearerAuth: []
  *     description: 좌표 기반으로 주변 주차장을 거리순으로 추천합니다.
  *     parameters:
  *       - in: query
@@ -118,6 +129,12 @@ router.get("/", parkingController.getAllParking);
  *                         type: number
  *                         example: 0.5
  *                         description: 거리 (km)
+ *       401:
+ *         description: 인증 실패
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       400:
  *         description: 잘못된 요청
  *         content:
@@ -131,7 +148,7 @@ router.get("/", parkingController.getAllParking);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get("/nearby", parkingController.getNearbyParking);
+router.get("/nearby", authenticate, parkingController.getNearbyParking);
 
 /**
  * @swagger
@@ -139,6 +156,8 @@ router.get("/nearby", parkingController.getNearbyParking);
  *   get:
  *     summary: 특정 주차장 정보 조회
  *     tags: [Parking]
+ *     security:
+ *       - bearerAuth: []
  *     description: 특정 주차장의 실시간 가용 정보를 조회합니다.
  *     parameters:
  *       - in: path
@@ -189,6 +208,12 @@ router.get("/nearby", parkingController.getNearbyParking);
  *                     updatedAt:
  *                       type: string
  *                       format: date-time
+ *       401:
+ *         description: 인증 실패
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       404:
  *         description: 주차장을 찾을 수 없음
  *         content:
@@ -202,6 +227,6 @@ router.get("/nearby", parkingController.getNearbyParking);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get("/:parkingId", parkingController.getParkingById);
+router.get("/:parkingId", authenticate, parkingController.getParkingById);
 
 module.exports = router;

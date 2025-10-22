@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const crowdController = require("../controllers/crowdController");
+const { authenticate } = require("../middlewares/authMiddleware");
 
 /**
  * @swagger
@@ -8,6 +9,8 @@ const crowdController = require("../controllers/crowdController");
  *   get:
  *     summary: 전체 인구 밀집도 조회
  *     tags: [Crowds]
+ *     security:
+ *       - bearerAuth: []
  *     description: 서울시 전체 POI(관심지점)의 인구 밀집도 데이터를 조회합니다.
  *     responses:
  *       200:
@@ -46,6 +49,12 @@ const crowdController = require("../controllers/crowdController");
  *                       fetchedAt:
  *                         type: string
  *                         format: date-time
+ *       401:
+ *         description: 인증 실패
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       500:
  *         description: 서버 오류
  *         content:
@@ -53,7 +62,7 @@ const crowdController = require("../controllers/crowdController");
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get("/", crowdController.getAllCrowds);
+router.get("/", authenticate, crowdController.getAllCrowds);
 
 /**
  * @swagger
@@ -61,6 +70,8 @@ router.get("/", crowdController.getAllCrowds);
  *   get:
  *     summary: 특정 지역 인구 밀집도 조회
  *     tags: [Crowds]
+ *     security:
+ *       - bearerAuth: []
  *     description: 특정 POI 코드의 인구 밀집도 데이터를 조회합니다.
  *     parameters:
  *       - in: path
@@ -95,6 +106,12 @@ router.get("/", crowdController.getAllCrowds);
  *                     fetchedAt:
  *                       type: string
  *                       format: date-time
+ *       401:
+ *         description: 인증 실패
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       404:
  *         description: 지역 코드를 찾을 수 없음
  *         content:
@@ -114,6 +131,8 @@ router.get("/", crowdController.getAllCrowds);
  *   get:
  *     summary: 인파 변화 추이 조회
  *     tags: [Crowds]
+ *     security:
+ *       - bearerAuth: []
  *     description: 특정 지역의 인파 변화 히스토리와 통계를 조회합니다.
  *     parameters:
  *       - in: path
@@ -168,6 +187,12 @@ router.get("/", crowdController.getAllCrowds);
  *                         changeRate:
  *                           type: number
  *                           example: 12.5
+ *       401:
+ *         description: 인증 실패
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       500:
  *         description: 서버 오류
  *         content:
@@ -175,8 +200,8 @@ router.get("/", crowdController.getAllCrowds);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get("/:areaCode/history", crowdController.getCrowdHistory);
+router.get("/:areaCode/history", authenticate, crowdController.getCrowdHistory);
 
-router.get("/:areaCode", crowdController.getCrowdByAreaCode);
+router.get("/:areaCode", authenticate, crowdController.getCrowdByAreaCode);
 
 module.exports = router;

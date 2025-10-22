@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const areaController = require("../controllers/areaController");
+const { authenticate } = require("../middlewares/authMiddleware");
 
 /**
  * @swagger
@@ -8,6 +9,8 @@ const areaController = require("../controllers/areaController");
  *   get:
  *     summary: 전체 지역 코드 조회
  *     tags: [Areas]
+ *     security:
+ *       - bearerAuth: []
  *     description: 서울시 전체 POI 지역 코드와 이름 매핑 정보를 조회합니다.
  *     responses:
  *       200:
@@ -40,6 +43,12 @@ const areaController = require("../controllers/areaController");
  *                       engName:
  *                         type: string
  *                         example: Gangnam MICE Special Tourist Zone
+ *       401:
+ *         description: 인증 실패
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       500:
  *         description: 서버 오류
  *         content:
@@ -47,7 +56,7 @@ const areaController = require("../controllers/areaController");
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get("/", areaController.getAllAreas);
+router.get("/", authenticate, areaController.getAllAreas);
 
 /**
  * @swagger
@@ -55,6 +64,8 @@ router.get("/", areaController.getAllAreas);
  *   get:
  *     summary: 카테고리 목록 조회
  *     tags: [Areas]
+ *     security:
+ *       - bearerAuth: []
  *     description: 전체 지역 카테고리 목록을 조회합니다.
  *     responses:
  *       200:
@@ -72,6 +83,12 @@ router.get("/", areaController.getAllAreas);
  *                   items:
  *                     type: string
  *                   example: ["관광특구", "고궁·문화유산", "인구밀집지역", "발달상권", "공원"]
+ *       401:
+ *         description: 인증 실패
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       500:
  *         description: 서버 오류
  *         content:
@@ -79,7 +96,7 @@ router.get("/", areaController.getAllAreas);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get("/categories", areaController.getCategories);
+router.get("/categories", authenticate, areaController.getCategories);
 
 /**
  * @swagger
@@ -87,6 +104,8 @@ router.get("/categories", areaController.getCategories);
  *   get:
  *     summary: 지역명 검색
  *     tags: [Areas]
+ *     security:
+ *       - bearerAuth: []
  *     description: 지역명(한글/영문)으로 검색합니다.
  *     parameters:
  *       - in: query
@@ -120,6 +139,12 @@ router.get("/categories", areaController.getCategories);
  *                         type: string
  *                       engName:
  *                         type: string
+ *       401:
+ *         description: 인증 실패
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       400:
  *         description: 잘못된 요청 (검색어 없음)
  *         content:
@@ -133,7 +158,7 @@ router.get("/categories", areaController.getCategories);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get("/search", areaController.searchAreas);
+router.get("/search", authenticate, areaController.searchAreas);
 
 /**
  * @swagger
@@ -141,6 +166,8 @@ router.get("/search", areaController.searchAreas);
  *   get:
  *     summary: 카테고리별 지역 조회
  *     tags: [Areas]
+ *     security:
+ *       - bearerAuth: []
  *     description: 특정 카테고리에 속하는 지역들을 조회합니다.
  *     parameters:
  *       - in: path
@@ -174,6 +201,12 @@ router.get("/search", areaController.searchAreas);
  *                         type: string
  *                       engName:
  *                         type: string
+ *       401:
+ *         description: 인증 실패
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       500:
  *         description: 서버 오류
  *         content:
@@ -181,7 +214,7 @@ router.get("/search", areaController.searchAreas);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get("/category/:category", areaController.getAreasByCategory);
+router.get("/category/:category", authenticate, areaController.getAreasByCategory);
 
 /**
  * @swagger
@@ -189,6 +222,8 @@ router.get("/category/:category", areaController.getAreasByCategory);
  *   get:
  *     summary: 특정 지역 정보 조회
  *     tags: [Areas]
+ *     security:
+ *       - bearerAuth: []
  *     description: 특정 POI 코드의 상세 정보를 조회합니다.
  *     parameters:
  *       - in: path
@@ -227,6 +262,12 @@ router.get("/category/:category", areaController.getAreasByCategory);
  *                     engName:
  *                       type: string
  *                       example: Gangnam MICE Special Tourist Zone
+ *       401:
+ *         description: 인증 실패
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       404:
  *         description: 지역 코드를 찾을 수 없음
  *         content:
@@ -240,7 +281,7 @@ router.get("/category/:category", areaController.getAreasByCategory);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get("/:areaCode", areaController.getAreaByCode);
+router.get("/:areaCode", authenticate, areaController.getAreaByCode);
 
 module.exports = router;
 

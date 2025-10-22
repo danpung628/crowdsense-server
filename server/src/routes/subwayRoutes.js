@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const subwayController = require("../controllers/subwayController");
+const { authenticate } = require("../middlewares/authMiddleware");
 
 /**
  * @swagger
@@ -8,6 +9,8 @@ const subwayController = require("../controllers/subwayController");
  *   get:
  *     summary: 전체 지하철 혼잡도 조회
  *     tags: [Subway]
+ *     security:
+ *       - bearerAuth: []
  *     description: 서울시 전체 지하철역의 실시간 혼잡도 데이터를 조회합니다.
  *     responses:
  *       200:
@@ -43,6 +46,12 @@ const subwayController = require("../controllers/subwayController");
  *                       updatedAt:
  *                         type: string
  *                         format: date-time
+ *       401:
+ *         description: 인증 실패
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       500:
  *         description: 서버 오류
  *         content:
@@ -50,7 +59,7 @@ const subwayController = require("../controllers/subwayController");
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get("/", subwayController.getAllSubway);
+router.get("/", authenticate, subwayController.getAllSubway);
 
 /**
  * @swagger
@@ -58,6 +67,8 @@ router.get("/", subwayController.getAllSubway);
  *   get:
  *     summary: 특정 지역 지하철 혼잡도 조회
  *     tags: [Subway]
+ *     security:
+ *       - bearerAuth: []
  *     description: 특정 POI 코드의 지하철 혼잡도 데이터를 조회합니다.
  *     parameters:
  *       - in: path
@@ -92,6 +103,12 @@ router.get("/", subwayController.getAllSubway);
  *                     fetchedAt:
  *                       type: string
  *                       format: date-time
+ *       401:
+ *         description: 인증 실패
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       404:
  *         description: 지역 코드를 찾을 수 없음
  *         content:
@@ -105,7 +122,7 @@ router.get("/", subwayController.getAllSubway);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get("/:areaCode", subwayController.getSubwayByAreaCode);
+router.get("/:areaCode", authenticate, subwayController.getSubwayByAreaCode);
 
 module.exports = router;
 
