@@ -60,17 +60,20 @@ class SubwayService {
    * 특정 지역의 지하철 데이터 가져오기 및 캐싱
    */
   async fetchAndCacheOne(areaCode) {
-    const url = `${this.baseUrl}/${this.apiKey}/JSON/citydata/1/5/${areaCode}`;
+    // citydata API 사용 (소문자 json)
+    const url = `${this.baseUrl}/${this.apiKey}/json/citydata/1/5/${areaCode}`;
     const cacheKey = `subway:${areaCode}`;
     
     try {
       const response = await axios.get(url, { responseType: "json", timeout: 10000 });
       
-      // LIVE_SUB_PPLTN 필드만 추출
-      const subwayData = response.data?.CITYDATA?.LIVE_DATA?.LIVE_SUB_PPLTN;
+      // LIVE_SUB_PPLTN 필드 추출 (지하철 승하차 인원 데이터)
+      const cityData = response.data?.CITYDATA;
+      const subwayData = cityData?.LIVE_SUB_PPLTN;
       
+      // 지하철 데이터가 없는 지역은 null 반환 (저장하지 않음)
       if (!subwayData) {
-        return null; // 지하철 데이터 없는 지역
+        return null;
       }
 
       const areaInfo = areaMapping.getAreaByCode(areaCode);
@@ -85,13 +88,15 @@ class SubwayService {
       await this.redis.safeSetEx(cacheKey, this.ttlSeconds, JSON.stringify(payload));
       return payload;
     } catch (error) {
+      // API 호출 실패 시 캐시된 데이터 사용 시도
       const cached = await this.redis.safeGet(cacheKey);
       if (cached) {
         try {
           return JSON.parse(cached);
         } catch (_) {}
       }
-      throw error;
+      // 캐시도 없으면 에러 발생하지 않고 null 반환
+      return null;
     }
   }
 

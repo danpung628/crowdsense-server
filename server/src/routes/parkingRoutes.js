@@ -152,21 +152,22 @@ router.get("/nearby", authenticate, parkingController.getNearbyParking);
 
 /**
  * @swagger
- * /api/parking/{parkingId}:
+ * /api/parking/district/{district}:
  *   get:
- *     summary: 특정 주차장 정보 조회
+ *     summary: 자치구별 주차장 정보 조회
  *     tags: [Parking]
  *     security:
  *       - bearerAuth: []
- *     description: 특정 주차장의 실시간 가용 정보를 조회합니다.
+ *     description: 특정 자치구의 주차장 정보를 조회합니다.
  *     parameters:
  *       - in: path
- *         name: parkingId
+ *         name: district
  *         required: true
  *         schema:
  *           type: string
- *           example: P001
- *         description: 주차장 ID
+ *           enum: [강남구, 강동구, 강북구, 강서구, 관악구, 광진구, 구로구, 금천구, 노원구, 도봉구, 동대문구, 동작구, 마포구, 서대문구, 서초구, 성동구, 성북구, 송파구, 양천구, 영등포구, 용산구, 은평구, 종로구, 중구, 중랑구]
+ *           example: 강남구
+ *         description: 서울시 자치구 이름
  *     responses:
  *       200:
  *         description: 성공
@@ -179,43 +180,38 @@ router.get("/nearby", authenticate, parkingController.getNearbyParking);
  *                   type: boolean
  *                   example: true
  *                 data:
- *                   type: object
- *                   properties:
- *                     parkingId:
- *                       type: string
- *                       example: P001
- *                     name:
- *                       type: string
- *                       example: 강남역 공영주차장
- *                     available:
- *                       type: integer
- *                       example: 45
- *                     total:
- *                       type: integer
- *                       example: 100
- *                     fee:
- *                       type: integer
- *                       example: 3000
- *                     address:
- *                       type: string
- *                       example: 서울시 강남구 역삼동
- *                     latitude:
- *                       type: number
- *                       example: 37.497942
- *                     longitude:
- *                       type: number
- *                       example: 127.027621
- *                     updatedAt:
- *                       type: string
- *                       format: date-time
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       parkingId:
+ *                         type: string
+ *                       name:
+ *                         type: string
+ *                       district:
+ *                         type: string
+ *                       available:
+ *                         type: integer
+ *                       total:
+ *                         type: integer
+ *                       fee:
+ *                         type: string
+ *                       address:
+ *                         type: string
+ *                       latitude:
+ *                         type: number
+ *                       longitude:
+ *                         type: number
+ *                       operatingTime:
+ *                         type: string
  *       401:
  *         description: 인증 실패
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Error'
- *       404:
- *         description: 주차장을 찾을 수 없음
+ *       400:
+ *         description: 유효하지 않은 자치구
  *         content:
  *           application/json:
  *             schema:
@@ -227,6 +223,6 @@ router.get("/nearby", authenticate, parkingController.getNearbyParking);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get("/:parkingId", authenticate, parkingController.getParkingById);
+router.get("/district/:district", authenticate, parkingController.getByDistrict);
 
 module.exports = router;

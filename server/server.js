@@ -13,10 +13,12 @@ const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/crowds
 
 mongoose.connect(MONGODB_URI)
 .then(() => {
-  console.log("MongoDB 연결 성공");
+  console.log("✅ MongoDB 연결 성공");
+  console.log(`   - URI: ${MONGODB_URI}`);
+  console.log(`   - Database: ${mongoose.connection.name}`);
 })
 .catch((error) => {
-  console.error("MongoDB 연결 실패:", error);
+  console.error("❌ MongoDB 연결 실패:", error);
   process.exit(1);
 });
 
@@ -66,8 +68,19 @@ app.get("/", (req, res) => {
   });
 });
 
+// 백그라운드 작업 시작
+const crowdService = require("./src/services/crowdService");
+const subwayService = require("./src/services/subwayService");
+
 // 서버 시작
-app.listen(PORT, () => {
-  console.log(`서버 실행: http://localhost:${PORT}`);
-  console.log(`📚 API 문서: http://localhost:${PORT}/api-docs`);
+app.listen(PORT, async () => {
+  console.log(`\n🚀 CrowdSense 서버 시작!`);
+  console.log(`   - 주소: http://localhost:${PORT}`);
+  console.log(`   - API 문서: http://localhost:${PORT}/api-docs\n`);
+  
+  // 백그라운드 작업 시작 (서버 시작 후)
+  console.log("⏱ 백그라운드 작업 시작...");
+  crowdService.startPolling();
+  subwayService.startPolling();
+  console.log("✅ 폴링 시작 완료\n");
 });
