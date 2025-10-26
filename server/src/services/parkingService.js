@@ -1,6 +1,8 @@
 // 주차장 정보 비즈니스 로직
 const axios = require("axios");
 const { getRedisClient } = require("../utils/redisClient");
+const { generateParkingCoordinates } = require("../utils/districtCoordinates");
+const { loadCoordinates, generateCoordinatesFile } = require("../data/parkingCoordinatesLoader");
 
 class ParkingService {
   constructor() {
@@ -17,6 +19,23 @@ class ParkingService {
       '성동구', '성북구', '송파구', '양천구', '영등포구',
       '용산구', '은평구', '종로구', '중구', '중랑구'
     ];
+    
+    // 주차장 좌표 캐시
+    this.parkingCoords = null;
+    
+    // 초기화
+    this.initialize();
+  }
+  
+  async initialize() {
+    // 좌표 파일 로드 시도
+    this.parkingCoords = loadCoordinates();
+    
+    // 파일이 없으면 생성
+    if (!this.parkingCoords) {
+      console.log('🔧 주차장 좌표 파일이 없습니다. 생성 중...');
+      this.parkingCoords = await generateCoordinatesFile();
+    }
   }
 
   /**
@@ -50,13 +69,28 @@ class ParkingService {
         console.log(`📌 샘플 데이터 전체:`, JSON.stringify(sample, null, 2));
       }
       
-      const formattedData = parkings.map(p => {
+      const formattedData = parkings.map((p, index) => {
+        const parkingId = p.PARKING_CODE || `P-${district}-${index}`;
+        
         // 위도/경도 필드 여러 가능성 시도
-        const latitude = parseFloat(p.LAT || p.LATITUDE || p.Y || p.lat) || null;
-        const longitude = parseFloat(p.LNG || p.LONGITUDE || p.LOT || p.X || p.lng) || null;
+        let latitude = parseFloat(p.LAT || p.LATITUDE || p.Y || p.lat) || null;
+        let longitude = parseFloat(p.LNG || p.LONGITUDE || p.LOT || p.X || p.lng) || null;
+        
+        // API에 좌표가 없으면 저장된 좌표 사용
+        if ((!latitude || !longitude) && this.parkingCoords && this.parkingCoords[parkingId]) {
+          latitude = this.parkingCoords[parkingId].lat;
+          longitude = this.parkingCoords[parkingId].lng;
+        }
+        
+        // 그래도 없으면 실시간 생성
+        if (!latitude || !longitude) {
+          const coords = generateParkingCoordinates(district, p.PARKING_NAME, p.ADDR);
+          latitude = coords.lat;
+          longitude = coords.lng;
+        }
         
         return {
-          parkingId: p.PARKING_CODE || `P-${Math.random().toString(36).substr(2, 9)}`,
+          parkingId,
           name: p.PARKING_NAME,
           district,
           address: p.ADDR,

@@ -165,28 +165,42 @@ router.get("/", authenticate, crowdController.getAllCrowds);
  *                   properties:
  *                     areaCode:
  *                       type: string
+ *                       example: POI001
+ *                     areaName:
+ *                       type: string
+ *                       example: 강남 MICE 관광특구
  *                     period:
  *                       type: string
  *                       example: 최근 24시간
- *                     data:
+ *                     dataCount:
+ *                       type: integer
+ *                       example: 24
+ *                     timeseries:
  *                       type: array
+ *                       description: 시계열 데이터 (시간별 인구수와 혼잡도)
  *                       items:
  *                         type: object
- *                     stats:
+ *                         properties:
+ *                           timestamp:
+ *                             type: string
+ *                             format: date-time
+ *                             example: "2025-10-26T13:31:53.553Z"
+ *                           peopleCount:
+ *                             type: integer
+ *                             example: 6250
+ *                           congestionLevel:
+ *                             type: integer
+ *                             example: 2
+ *                     average:
  *                       type: object
+ *                       description: 평균값
  *                       properties:
- *                         average:
+ *                         peopleCount:
+ *                           type: integer
+ *                           example: 7500
+ *                         congestionLevel:
  *                           type: number
- *                         max:
- *                           type: number
- *                         min:
- *                           type: number
- *                         trend:
- *                           type: number
- *                           example: 1
- *                         changeRate:
- *                           type: number
- *                           example: 12.5
+ *                           example: 2.5
  *       401:
  *         description: 인증 실패
  *         content:
