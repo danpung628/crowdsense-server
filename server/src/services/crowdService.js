@@ -59,17 +59,27 @@ class CrowdService {
    * 모든 지역 코드 데이터 가져오기
    */
   async fetchAllAreaCodes() {
+    const now = Date.now();
+    const shouldSaveHistory = (now - this.lastHistorySaved >= this.historyInterval);
+    
+    // 모든 지역 데이터 가져오기
     for (const areaCode of this.areaCodes) {
-      await this.fetchAndCacheOne(areaCode).catch((e) => {
+      await this.fetchAndCacheOne(areaCode, shouldSaveHistory).catch((e) => {
         console.error(`Fetch failed for areaCode=${areaCode}:`, e.message);
       });
+    }
+    
+    // 히스토리 저장 완료 후 시간 업데이트
+    if (shouldSaveHistory) {
+      this.lastHistorySaved = now;
+      console.log(`✅ 히스토리 저장 완료: ${this.areaCodes.length}개 지역`);
     }
   }
 
   /**
    * 특정 지역 코드 데이터 가져오기 및 캐싱
    */
-  async fetchAndCacheOne(areaCode) {
+  async fetchAndCacheOne(areaCode, saveHistory = false) {
     const url = `${this.baseUrl}/${this.apiKey}/JSON/citydata_ppltn/1/5/${areaCode}`;
     const cacheKey = `crowd:${areaCode}`;
     
@@ -89,8 +99,10 @@ class CrowdService {
       // Redis 캐싱
       await this.redis.safeSetEx(cacheKey, this.ttlSeconds, JSON.stringify(payload));
       
-      // 10분마다 MongoDB에 히스토리 저장
-      await this.saveToHistoryIfNeeded(payload);
+      // 플래그가 true일 때만 MongoDB에 히스토리 저장
+      if (saveHistory) {
+        await this.saveToHistory(payload);
+      }
       
       return payload;
     } catch (error) {
@@ -106,17 +118,10 @@ class CrowdService {
   }
 
   /**
-   * 10분마다 MongoDB에 히스토리 저장
+   * MongoDB에 히스토리 저장 (실제 저장 로직)
    */
-  async saveToHistoryIfNeeded(payload) {
+  async saveToHistory(payload) {
     try {
-      const now = Date.now();
-      
-      // 10분이 지났는지 확인
-      if (now - this.lastHistorySaved < this.historyInterval) {
-        return;
-      }
-      
       // 인구수 추출 (API 응답에서)
       const peopleCount = this.extractPeopleCount(payload.data);
       const congestionLevel = this.calculateCongestionLevel(peopleCount);
@@ -130,9 +135,6 @@ class CrowdService {
         congestionLevel,
         timestamp: new Date()
       });
-      
-      // 마지막 저장 시간 업데이트
-      this.lastHistorySaved = now;
     } catch (error) {
       // 히스토리 저장 실패해도 메인 기능에 영향 없도록 에러만 로그
       console.error(`히스토리 저장 실패 (${payload.areaCode}):`, error.message);

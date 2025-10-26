@@ -4,30 +4,21 @@ const { successResponse, errorResponse } = require("../utils/errorHandler");
 // 전체 주차장 정보 조회
 exports.getAllParking = async (req, res) => {
   try {
-    const { district } = req.query;
-    
-    // 구 필터링
-    if (district) {
-      const data = await parkingService.getParkingByDistrict(district);
-      return res.json(successResponse(data));
-    }
-    
     const data = await parkingService.getParkingData();
     res.json(successResponse(data));
   } catch (error) {
-    const statusCode = error.message.includes('유효하지 않은') ? 400 : 500;
-    res.status(statusCode).json(errorResponse(error));
+    res.status(500).json(errorResponse(error));
   }
 };
 
-// 특정 주차장 정보 조회
-exports.getParkingById = async (req, res) => {
+// 자치구별 주차장 정보 조회
+exports.getByDistrict = async (req, res) => {
   try {
-    const { parkingId } = req.params;
-    const data = await parkingService.getParkingDataById(parkingId);
+    const { district } = req.params;
+    const data = await parkingService.getParkingByDistrict(district);
     res.json(successResponse(data));
   } catch (error) {
-    const statusCode = error.message.includes('찾을 수 없습니다') ? 404 : 500;
+    const statusCode = error.message.includes('유효하지 않은') ? 400 : 500;
     res.status(statusCode).json(errorResponse(error));
   }
 };
