@@ -7,7 +7,7 @@ const { loadCoordinates, generateCoordinatesFile } = require("../data/parkingCoo
 class ParkingService {
   constructor() {
     this.redis = getRedisClient();
-    this.ttlSeconds = 300; // 5분 캐시 (주차장 정보는 천천히 변함)
+    this.ttlSeconds = 600; // 10분 캐시 (주차장 정보는 천천히 변함)
     this.baseUrl = process.env.SEOUL_POPULATION_API_URL || "http://openapi.seoul.go.kr:8088";
     this.apiKey = process.env.SEOUL_API_KEY || "47464b765073696c33366142537a7a";
     
