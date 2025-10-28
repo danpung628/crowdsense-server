@@ -7,11 +7,24 @@ const { authenticate } = require("../middlewares/authMiddleware");
  * @swagger
  * /api/areas:
  *   get:
- *     summary: 전체 지역 코드 조회
+ *     summary: 전체 지역 코드 조회 (페이지네이션, HATEOAS 지원)
  *     tags: [Areas]
  *     security:
  *       - bearerAuth: []
- *     description: 서울시 전체 POI 지역 코드와 이름 매핑 정보를 조회합니다.
+ *     description: 서울시 전체 POI 지역 코드와 이름 매핑 정보를 조회합니다. 페이지네이션과 HATEOAS 링크를 지원합니다.
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: 페이지 번호
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 50
+ *         description: 페이지당 항목 수
  *     responses:
  *       200:
  *         description: 성공
@@ -62,11 +75,11 @@ router.get("/", authenticate, areaController.getAllAreas);
  * @swagger
  * /api/areas/categories:
  *   get:
- *     summary: 카테고리 목록 조회
+ *     summary: 카테고리 목록 조회 (HATEOAS 지원)
  *     tags: [Areas]
  *     security:
  *       - bearerAuth: []
- *     description: 전체 지역 카테고리 목록을 조회합니다.
+ *     description: 전체 지역 카테고리 목록을 조회합니다. HATEOAS 링크를 포함합니다.
  *     responses:
  *       200:
  *         description: 성공
@@ -102,11 +115,11 @@ router.get("/categories", authenticate, areaController.getCategories);
  * @swagger
  * /api/areas/search:
  *   get:
- *     summary: 지역명 검색
+ *     summary: 지역명 검색 (HATEOAS 지원)
  *     tags: [Areas]
  *     security:
  *       - bearerAuth: []
- *     description: 지역명(한글/영문)으로 검색합니다.
+ *     description: 지역명(한글/영문)으로 검색합니다. HATEOAS 링크를 포함합니다.
  *     parameters:
  *       - in: query
  *         name: q
@@ -164,11 +177,11 @@ router.get("/search", authenticate, areaController.searchAreas);
  * @swagger
  * /api/areas/category/{category}:
  *   get:
- *     summary: 카테고리별 지역 조회
+ *     summary: 카테고리별 지역 조회 (HATEOAS 지원)
  *     tags: [Areas]
  *     security:
  *       - bearerAuth: []
- *     description: 특정 카테고리에 속하는 지역들을 조회합니다.
+ *     description: 특정 카테고리에 속하는 지역들을 조회합니다. HATEOAS 링크를 포함합니다.
  *     parameters:
  *       - in: path
  *         name: category
@@ -220,11 +233,11 @@ router.get("/category/:category", authenticate, areaController.getAreasByCategor
  * @swagger
  * /api/areas/{areaCode}:
  *   get:
- *     summary: 특정 지역 정보 조회
+ *     summary: 특정 지역 정보 조회 (HATEOAS 지원)
  *     tags: [Areas]
  *     security:
  *       - bearerAuth: []
- *     description: 특정 POI 코드의 상세 정보를 조회합니다.
+ *     description: 특정 POI 코드의 상세 정보를 조회합니다. HATEOAS 링크를 포함합니다.
  *     parameters:
  *       - in: path
  *         name: areaCode
