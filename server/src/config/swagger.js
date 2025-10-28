@@ -93,6 +93,10 @@ const options = {
         name: 'Rankings',
         description: '인기 장소 랭킹 API',
       },
+      {
+        name: 'Backups',
+        description: 'S3 백업 관리 API (MongoDB 히스토리 데이터 백업)',
+      },
     ],
   },
   apis: ['./src/routes/*.js'], // 라우트 파일에서 Swagger 주석 읽기

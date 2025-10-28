@@ -78,6 +78,9 @@ app.use("/api/areas", areaRoutes);
 const rankingRoutes = require("./src/routes/rankingRoutes");
 app.use("/api/rankings", rankingRoutes);
 
+const backupRoutes = require("./src/routes/backupRoutes");
+app.use("/api/backups", backupRoutes);
+
 // 기본 경로
 app.get("/", (req, res) => {
   res.json({
@@ -89,7 +92,8 @@ app.get("/", (req, res) => {
       subway: "/api/subway",
       parking: "/api/parking",
       areas: "/api/areas",
-      rankings: "/api/rankings"
+      rankings: "/api/rankings",
+      backups: "/api/backups"
     }
   });
 });
@@ -97,6 +101,7 @@ app.get("/", (req, res) => {
 // 백그라운드 작업 시작
 const crowdService = require("./src/services/crowdService");
 const subwayService = require("./src/services/subwayService");
+const s3BackupService = require("./src/services/s3BackupService");
 
 // 서버 시작
 app.listen(PORT, async () => {
@@ -108,5 +113,6 @@ app.listen(PORT, async () => {
   console.log("⏱ 백그라운드 작업 시작...");
   crowdService.startPolling();
   subwayService.startPolling();
+  s3BackupService.startBackupScheduler();
   console.log("✅ 폴링 시작 완료\n");
 });

@@ -1,15 +1,19 @@
 /**
  * 주차장 좌표 로더 및 생성기
  * 실행 시 자동으로 좌표 파일 생성
+ * S3 통합 지원
  */
 
 const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
+const { getJsonFromS3, putJsonToS3 } = require('../utils/s3Client');
 
 const SEOUL_API_URL = 'http://openapi.seoul.go.kr:8088';
 const SEOUL_API_KEY = '47464b765073696c33366142537a7a';
 const COORDS_FILE = path.join(__dirname, 'parkingCoordinates.json');
+const S3_KEY = 'static-data/parkingCoordinates.json';
+const USE_S3 = process.env.USE_S3 === 'true'; // 환경 변수로 S3 사용 여부 결정
 
 const districts = [
   '강남구', '강동구', '강북구', '강서구', '관악구',
@@ -138,19 +142,46 @@ async function generateCoordinatesFile() {
     console.log(`  ${district} 완료: ${parkings.length}개 처리`);
   }
   
+  // 로컬 저장
   fs.writeFileSync(COORDS_FILE, JSON.stringify(parkingCoordinates, null, 2), 'utf-8');
   console.log(`\n✅ 주차장 좌표 파일 생성 완료: ${totalCount}개`);
   console.log(`📁 저장 위치: ${COORDS_FILE}`);
   
+  // S3 저장
+  if (USE_S3) {
+    const s3Success = await putJsonToS3(S3_KEY, parkingCoordinates);
+    if (s3Success) {
+      console.log(`☁️  S3 업로드 완료: ${S3_KEY}`);
+    }
+  }
+  
   return parkingCoordinates;
 }
 
-function loadCoordinates() {
+async function loadCoordinates() {
+  // S3 사용 시
+  if (USE_S3) {
+    console.log('📦 S3에서 주차장 좌표 로드 중...');
+    const coords = await getJsonFromS3(S3_KEY);
+    if (coords) {
+      console.log(`✅ S3 로드 완료: ${Object.keys(coords).length}개`);
+      return coords;
+    }
+    console.log('⚠️  S3 로드 실패, 로컬 파일 시도...');
+  }
+  
+  // 로컬 파일 사용
   if (fs.existsSync(COORDS_FILE)) {
     try {
       const data = fs.readFileSync(COORDS_FILE, 'utf-8');
       const coords = JSON.parse(data);
-      console.log(`📂 주차장 좌표 로드: ${Object.keys(coords).length}개`);
+      console.log(`📂 로컬 주차장 좌표 로드: ${Object.keys(coords).length}개`);
+      
+      // S3에 백업 (선택적)
+      if (USE_S3) {
+        await putJsonToS3(S3_KEY, coords);
+      }
+      
       return coords;
     } catch (error) {
       console.error('주차장 좌표 파일 로드 실패:', error.message);
@@ -160,8 +191,8 @@ function loadCoordinates() {
   return null;
 }
 
-function getCoordinates(parkingId) {
-  const coords = loadCoordinates();
+async function getCoordinates(parkingId) {
+  const coords = await loadCoordinates();
   return coords ? coords[parkingId] : null;
 }
 
