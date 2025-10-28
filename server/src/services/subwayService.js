@@ -6,8 +6,8 @@ const areaMapping = require("../utils/areaMapping");
 class SubwayService {
   constructor() {
     this.redis = getRedisClient();
-    this.ttlSeconds = 60;
-    this.pollingInterval = 60 * 1000; // 1분마다 갱신
+    this.ttlSeconds = 60*10;
+    this.pollingInterval = 10*60 * 1000; // 10분마다 갱신
     this.baseUrl = process.env.SEOUL_POPULATION_API_URL || "http://openapi.seoul.go.kr:8088";
     this.apiKey = process.env.SEOUL_API_KEY || "47464b765073696c33366142537a7a";
     

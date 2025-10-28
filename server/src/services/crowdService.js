@@ -7,9 +7,9 @@ const CrowdHistory = require("../models/CrowdHistory");
 class CrowdService {
   constructor() {
     this.redis = getRedisClient();
-    this.ttlSeconds = 60; // 60초 TTL
-    this.pollingInterval = 60 * 1000; // 1분마다 갱신
-    this.historyInterval = 1 * 60 * 1000; // 1분마다 MongoDB 저장 (테스트용, 원래는 10분)
+    this.ttlSeconds = 60*10; // 10분 TTL
+    this.pollingInterval = 10*60 * 1000; // 10분마다 갱신
+    this.historyInterval = 30 * 60 * 1000; // 1분마다 MongoDB 저장 (테스트용, 원래는 10분)
     this.baseUrl = process.env.SEOUL_POPULATION_API_URL || "http://openapi.seoul.go.kr:8088";
     this.apiKey = process.env.SEOUL_API_KEY || "47464b765073696c33366142537a7a";
     
@@ -18,6 +18,10 @@ class CrowdService {
     
     // 마지막 히스토리 저장 시간 (초기값: 간격만큼 전으로 설정하여 즉시 저장)
     this.lastHistorySaved = Date.now() - this.historyInterval;
+    
+    // 에러 추적 (실패한 POI 코드와 실패 횟수)
+    this.failedAreas = new Map();
+    this.noDataWarningCount = 0;
     
     console.log(`📊 CrowdService 초기화: ${this.areaCodes.length}개 지역, 히스토리 주기: ${this.historyInterval/1000}초`);
     
@@ -67,15 +71,37 @@ class CrowdService {
       console.log(`\n📝 MongoDB 히스토리 저장 시작 (총 ${this.areaCodes.length}개 지역)`);
     }
     
-    // 모든 지역 데이터 가져오기
+    // 에러 카운터 초기화
     let successCount = 0;
+    let failCount = 0;
+    const failedAreas = [];
+    this.noDataWarningCount = 0; // 데이터 없음 카운트 리셋
+    
+    // 모든 지역 데이터 가져오기
     for (const areaCode of this.areaCodes) {
       try {
         await this.fetchAndCacheOne(areaCode, shouldSaveHistory);
         if (shouldSaveHistory) successCount++;
+        // 성공 시 실패 기록 제거
+        this.failedAreas.delete(areaCode);
       } catch (e) {
-        console.error(`❌ Fetch failed for areaCode=${areaCode}:`, e.message);
+        failCount++;
+        failedAreas.push(areaCode);
+        
+        // 실패 횟수 증가
+        const prevFailCount = this.failedAreas.get(areaCode) || 0;
+        this.failedAreas.set(areaCode, prevFailCount + 1);
       }
+    }
+    
+    // 에러 요약 출력 (개별 에러 대신)
+    if (failCount > 0) {
+      console.log(`⚠️  API 호출 실패: ${failCount}개 지역 (${failedAreas.slice(0, 5).join(', ')}${failCount > 5 ? '...' : ''})`);
+    }
+    
+    // 데이터 없음 경고 요약
+    if (this.noDataWarningCount > 0) {
+      console.log(`ℹ️  데이터 없는 응답: ${this.noDataWarningCount}건`);
     }
     
     // 히스토리 저장 완료 후 시간 업데이트
@@ -93,7 +119,7 @@ class CrowdService {
     const cacheKey = `crowd:${areaCode}`;
     
     try {
-      const response = await axios.get(url, { responseType: "json", timeout: 10000 });
+      const response = await axios.get(url, { responseType: "json", timeout: 15000 });
       
       // Area 매핑 정보 추가
       const areaInfo = areaMapping.getAreaByCode(areaCode);
@@ -174,7 +200,8 @@ class CrowdService {
       const ppltnArray = apiData?.['SeoulRtd.citydata_ppltn'];
       
       if (!ppltnArray || !Array.isArray(ppltnArray) || ppltnArray.length === 0) {
-        console.warn('⚠️ SeoulRtd.citydata_ppltn 데이터 없음');
+        // 데이터 없음 경고는 카운트만 증가 (너무 많은 로그 방지)
+        this.noDataWarningCount++;
         return 0;
       }
       
@@ -191,7 +218,10 @@ class CrowdService {
       return minPop || maxPop || 0;
       
     } catch (error) {
-      console.error('❌ 인구수 추출 에러:', error.message);
+      // 중요한 에러만 로그 출력
+      if (process.env.NODE_ENV === 'development') {
+        console.error('❌ 인구수 추출 에러:', error.message);
+      }
       return 0;
     }
   }
