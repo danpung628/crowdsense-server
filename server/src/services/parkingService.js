@@ -70,36 +70,63 @@ class ParkingService {
       }
       
       const formattedData = parkings.map((p, index) => {
-        const parkingId = p.PARKING_CODE || `P-${district}-${index}`;
+        const parkingId = p.PKLT_CD || `P-${district}-${index}`;
         
-        // 위도/경도 필드 여러 가능성 시도
-        let latitude = parseFloat(p.LAT || p.LATITUDE || p.Y || p.lat) || null;
-        let longitude = parseFloat(p.LNG || p.LONGITUDE || p.LOT || p.X || p.lng) || null;
+        // API에서 좌표를 제공하지 않으므로 parkingCoordinates.json 사용
+        let latitude = null;
+        let longitude = null;
         
-        // API에 좌표가 없으면 저장된 좌표 사용
-        if ((!latitude || !longitude) && this.parkingCoords && this.parkingCoords[parkingId]) {
+        if (this.parkingCoords && this.parkingCoords[parkingId]) {
           latitude = this.parkingCoords[parkingId].lat;
           longitude = this.parkingCoords[parkingId].lng;
-        }
-        
-        // 그래도 없으면 실시간 생성
-        if (!latitude || !longitude) {
-          const coords = generateParkingCoordinates(district, p.PARKING_NAME, p.ADDR);
+        } else {
+          // 저장된 좌표가 없으면 구 대표 좌표 사용
+          const coords = generateParkingCoordinates(district, p.PKLT_NM, p.ADDR);
           latitude = coords.lat;
           longitude = coords.lng;
         }
         
+        // 주차 가능 대수 계산 (총 주차면 - 현재 주차 차량수)
+        const totalSpaces = parseInt(p.TPKCT) || 0;
+        const currentVehicles = parseInt(p.NOW_PRK_VHCL_CNT) || 0;
+        const availableSpaces = Math.max(0, totalSpaces - currentVehicles);
+        
         return {
           parkingId,
-          name: p.PARKING_NAME,
+          code: p.PKLT_CD,
+          name: p.PKLT_NM,
           district,
           address: p.ADDR,
-          total: parseInt(p.CAPACITY) || 0,
-          available: parseInt(p.CUR_PARKING) || 0,
-          fee: p.RATES || '정보 없음',
-          latitude,
-          longitude,
-          operatingTime: `${p.WEEKDAY_BEGIN_TIME || '00:00'}~${p.WEEKDAY_END_TIME || '24:00'}`,
+          type: p.PRK_TYPE_NM || p.PKLT_TYPE,
+          operationType: p.OPER_SE_NM || p.OPER_SE,
+          tel: p.TELNO,
+          total: totalSpaces,
+          current: currentVehicles,
+          available: availableSpaces,
+          isAvailable: availableSpaces > 0,
+          isPaidParking: p.PAY_YN === 'Y',
+          rates: {
+            basic: {
+              fee: parseInt(p.BSC_PRK_CRG) || 0,
+              time: parseInt(p.BSC_PRK_HR) || 0
+            },
+            additional: {
+              fee: parseInt(p.ADD_PRK_CRG) || 0,
+              time: parseInt(p.ADD_PRK_HR) || 0
+            },
+            dayMax: parseInt(p.DAY_MAX_CRG) || 0
+          },
+          operatingHours: {
+            weekday: `${p.WD_OPER_BGNG_TM || '0000'}-${p.WD_OPER_END_TM || '2400'}`,
+            weekend: `${p.WE_OPER_BGNG_TM || '0000'}-${p.WE_OPER_END_TM || '2400'}`,
+            holiday: `${p.LHLDY_OPER_BGNG_TM || '0000'}-${p.LHLDY_OPER_END_TM || '2400'}`
+          },
+          nightFree: p.NGHT_PAY_YN === 'Y',
+          coordinates: {
+            latitude,
+            longitude
+          },
+          lastUpdated: p.NOW_PRK_VHCL_UPDT_TM || new Date().toISOString(),
           updatedAt: new Date().toISOString()
         };
       });
@@ -167,19 +194,19 @@ class ParkingService {
     console.log(`📍 검색 위치: lat=${lat}, lng=${lng}, radius=${radiusKm}km`);
     
     // 위도/경도 있는 주차장 개수 확인
-    const withCoords = allParkings.filter(p => p.latitude && p.longitude);
+    const withCoords = allParkings.filter(p => p.coordinates?.latitude && p.coordinates?.longitude);
     console.log(`📊 좌표 있는 주차장: ${withCoords.length}개`);
     
     if (withCoords.length > 0) {
-      console.log(`📌 샘플 주차장 좌표: ${withCoords[0].name} - lat=${withCoords[0].latitude}, lng=${withCoords[0].longitude}`);
+      console.log(`📌 샘플 주차장 좌표: ${withCoords[0].name} - lat=${withCoords[0].coordinates.latitude}, lng=${withCoords[0].coordinates.longitude}`);
     }
     
     // 거리 계산 및 필터링
     const nearbyParkings = allParkings
       .map(parking => {
-        if (!parking.latitude || !parking.longitude) return null;
+        if (!parking.coordinates?.latitude || !parking.coordinates?.longitude) return null;
         
-        const distance = this.calculateDistance(lat, lng, parking.latitude, parking.longitude);
+        const distance = this.calculateDistance(lat, lng, parking.coordinates.latitude, parking.coordinates.longitude);
         return { ...parking, distance };
       })
       .filter(p => p && p.distance <= radiusKm)
