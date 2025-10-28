@@ -15,13 +15,16 @@ class AppError extends Error {
 /**
  * 성공 응답 포맷
  */
-const successResponse = (data, message = null) => {
+const successResponse = (data, message = null, links = null) => {
   const response = {
     success: true,
     data
   };
   if (message) {
     response.message = message;
+  }
+  if (links) {
+    response._links = links;
   }
   return response;
 };

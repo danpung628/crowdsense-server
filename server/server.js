@@ -26,6 +26,32 @@ mongoose.connect(MONGODB_URI)
 app.use(cors());
 app.use(express.json());
 
+// Cache-Control 헤더 미들웨어
+app.use('/api/crowds', (req, res, next) => {
+  res.set('Cache-Control', 'public, max-age=60'); // 1분 캐시
+  next();
+});
+
+app.use('/api/subway', (req, res, next) => {
+  res.set('Cache-Control', 'public, max-age=60'); // 1분 캐시
+  next();
+});
+
+app.use('/api/parking', (req, res, next) => {
+  res.set('Cache-Control', 'public, max-age=30'); // 30초 캐시 (더 자주 변경됨)
+  next();
+});
+
+app.use('/api/areas', (req, res, next) => {
+  res.set('Cache-Control', 'public, max-age=3600'); // 1시간 캐시 (정적 데이터)
+  next();
+});
+
+app.use('/api/rankings', (req, res, next) => {
+  res.set('Cache-Control', 'public, max-age=300'); // 5분 캐시
+  next();
+});
+
 // Swagger 문서화
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   explorer: true,

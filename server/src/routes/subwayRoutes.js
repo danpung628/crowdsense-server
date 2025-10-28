@@ -7,11 +7,36 @@ const { authenticate } = require("../middlewares/authMiddleware");
  * @swagger
  * /api/subway:
  *   get:
- *     summary: 전체 지하철 혼잡도 조회
+ *     summary: 전체 지하철 혼잡도 조회 (페이지네이션, 정렬, HATEOAS 지원)
  *     tags: [Subway]
  *     security:
  *       - bearerAuth: []
- *     description: 서울시 전체 지하철역의 실시간 혼잡도 데이터를 조회합니다.
+ *     description: 서울시 전체 지하철역의 실시간 혼잡도 데이터를 조회합니다. 페이지네이션, 정렬, HATEOAS 링크를 지원합니다.
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: 페이지 번호
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *         description: 페이지당 항목 수
+ *       - in: query
+ *         name: sort
+ *         schema:
+ *           type: string
+ *         description: 정렬 필드
+ *       - in: query
+ *         name: order
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: asc
+ *         description: 정렬 순서
  *     responses:
  *       200:
  *         description: 성공
@@ -65,11 +90,11 @@ router.get("/", authenticate, subwayController.getAllSubway);
  * @swagger
  * /api/subway/{areaCode}:
  *   get:
- *     summary: 특정 지역 지하철 혼잡도 조회
+ *     summary: 특정 지역 지하철 혼잡도 조회 (HATEOAS 지원)
  *     tags: [Subway]
  *     security:
  *       - bearerAuth: []
- *     description: 특정 POI 코드의 지하철 혼잡도 데이터를 조회합니다.
+ *     description: 특정 POI 코드의 지하철 혼잡도 데이터를 조회합니다. HATEOAS 링크를 포함합니다.
  *     parameters:
  *       - in: path
  *         name: areaCode

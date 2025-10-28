@@ -7,11 +7,11 @@ const { authenticate } = require("../middlewares/authMiddleware");
  * @swagger
  * /api/rankings/popular:
  *   get:
- *     summary: 인기 장소 랭킹 조회
+ *     summary: 인기 장소 랭킹 조회 (HATEOAS 지원)
  *     tags: [Rankings]
  *     security:
  *       - bearerAuth: []
- *     description: 평균 인구수 기준 인기 장소 랭킹을 조회합니다.
+ *     description: 평균 인구수 기준 인기 장소 랭킹을 조회합니다. HATEOAS 링크를 포함합니다.
  *     parameters:
  *       - in: query
  *         name: limit

@@ -7,11 +7,49 @@ const { authenticate } = require("../middlewares/authMiddleware");
  * @swagger
  * /api/parking:
  *   get:
- *     summary: 전체 주차장 정보 조회
+ *     summary: 전체 주차장 정보 조회 (페이지네이션, 필터링, 정렬, HATEOAS 지원)
  *     tags: [Parking]
  *     security:
  *       - bearerAuth: []
- *     description: 서울시 전체 주차장의 실시간 가용 정보를 조회합니다.
+ *     description: 서울시 전체 주차장의 실시간 가용 정보를 조회합니다. 페이지네이션, 필터링, 정렬, HATEOAS 링크를 지원합니다.
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: 페이지 번호
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 50
+ *         description: 페이지당 항목 수
+ *       - in: query
+ *         name: district
+ *         schema:
+ *           type: string
+ *           example: 강남구
+ *         description: 자치구 필터
+ *       - in: query
+ *         name: available
+ *         schema:
+ *           type: string
+ *           enum: [true, false]
+ *         description: 가용 주차면 필터 (true=가용, false=만차)
+ *       - in: query
+ *         name: sort
+ *         schema:
+ *           type: string
+ *           example: available
+ *         description: 정렬 필드
+ *       - in: query
+ *         name: order
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: asc
+ *         description: 정렬 순서
  *     responses:
  *       200:
  *         description: 성공
@@ -74,11 +112,11 @@ router.get("/", authenticate, parkingController.getAllParking);
  * @swagger
  * /api/parking/nearby:
  *   get:
- *     summary: 주변 주차장 추천
+ *     summary: 주변 주차장 추천 (HATEOAS 지원)
  *     tags: [Parking]
  *     security:
  *       - bearerAuth: []
- *     description: 좌표 기반으로 주변 주차장을 거리순으로 추천합니다.
+ *     description: 좌표 기반으로 주변 주차장을 거리순으로 추천합니다. HATEOAS 링크를 포함합니다.
  *     parameters:
  *       - in: query
  *         name: lat
@@ -154,11 +192,11 @@ router.get("/nearby", authenticate, parkingController.getNearbyParking);
  * @swagger
  * /api/parking/district/{district}:
  *   get:
- *     summary: 자치구별 주차장 정보 조회
+ *     summary: 자치구별 주차장 정보 조회 (HATEOAS 지원)
  *     tags: [Parking]
  *     security:
  *       - bearerAuth: []
- *     description: 특정 자치구의 주차장 정보를 조회합니다.
+ *     description: 특정 자치구의 주차장 정보를 조회합니다. HATEOAS 링크를 포함합니다.
  *     parameters:
  *       - in: path
  *         name: district

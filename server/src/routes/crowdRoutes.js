@@ -7,11 +7,45 @@ const { authenticate } = require("../middlewares/authMiddleware");
  * @swagger
  * /api/crowds:
  *   get:
- *     summary: 전체 인구 밀집도 조회
+ *     summary: 전체 인구 밀집도 조회 (페이지네이션, 필터링, 정렬, HATEOAS 지원)
  *     tags: [Crowds]
  *     security:
  *       - bearerAuth: []
- *     description: 서울시 전체 POI(관심지점)의 인구 밀집도 데이터를 조회합니다.
+ *     description: 서울시 전체 POI(관심지점)의 인구 밀집도 데이터를 조회합니다. 페이지네이션, 필터링, 정렬을 지원하며 HATEOAS 링크를 포함합니다.
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *           example: 1
+ *         description: 페이지 번호
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *           example: 20
+ *         description: 페이지당 항목 수
+ *       - in: query
+ *         name: category
+ *         schema:
+ *           type: string
+ *           example: 관광특구
+ *         description: 카테고리 필터
+ *       - in: query
+ *         name: sort
+ *         schema:
+ *           type: string
+ *           example: areaCode
+ *         description: 정렬 필드 (areaCode, areaInfo.areaName 등)
+ *       - in: query
+ *         name: order
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: asc
+ *         description: 정렬 순서
  *     responses:
  *       200:
  *         description: 성공
@@ -24,31 +58,56 @@ const { authenticate } = require("../middlewares/authMiddleware");
  *                   type: boolean
  *                   example: true
  *                 data:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       areaCode:
- *                         type: string
- *                         example: POI001
- *                       areaInfo:
+ *                   type: object
+ *                   properties:
+ *                     items:
+ *                       type: array
+ *                       items:
  *                         type: object
  *                         properties:
- *                           category:
+ *                           areaCode:
  *                             type: string
- *                             example: 관광특구
- *                           areaName:
+ *                             example: POI001
+ *                           areaInfo:
+ *                             type: object
+ *                           data:
+ *                             type: object
+ *                           fetchedAt:
  *                             type: string
- *                             example: 강남 MICE 관광특구
- *                           engName:
- *                             type: string
- *                             example: Gangnam MICE Special Tourist Zone
- *                       data:
- *                         type: object
- *                         description: 서울시 도시데이터 API 응답
- *                       fetchedAt:
- *                         type: string
- *                         format: date-time
+ *                             format: date-time
+ *                     pagination:
+ *                       type: object
+ *                       properties:
+ *                         page:
+ *                           type: integer
+ *                           example: 1
+ *                         limit:
+ *                           type: integer
+ *                           example: 20
+ *                         total:
+ *                           type: integer
+ *                           example: 128
+ *                         totalPages:
+ *                           type: integer
+ *                           example: 7
+ *                 _links:
+ *                   type: object
+ *                   description: HATEOAS 링크
+ *                   properties:
+ *                     self:
+ *                       type: object
+ *                       properties:
+ *                         href:
+ *                           type: string
+ *                           example: /api/crowds?page=1&limit=20
+ *                     first:
+ *                       type: object
+ *                     last:
+ *                       type: object
+ *                     prev:
+ *                       type: object
+ *                     next:
+ *                       type: object
  *       401:
  *         description: 인증 실패
  *         content:
@@ -68,11 +127,11 @@ router.get("/", authenticate, crowdController.getAllCrowds);
  * @swagger
  * /api/crowds/{areaCode}:
  *   get:
- *     summary: 특정 지역 인구 밀집도 조회
+ *     summary: 특정 지역 인구 밀집도 조회 (HATEOAS 지원)
  *     tags: [Crowds]
  *     security:
  *       - bearerAuth: []
- *     description: 특정 POI 코드의 인구 밀집도 데이터를 조회합니다.
+ *     description: 특정 POI 코드의 인구 밀집도 데이터를 조회합니다. HATEOAS 링크를 포함합니다.
  *     parameters:
  *       - in: path
  *         name: areaCode
@@ -129,11 +188,11 @@ router.get("/", authenticate, crowdController.getAllCrowds);
  * @swagger
  * /api/crowds/{areaCode}/history:
  *   get:
- *     summary: 인파 변화 추이 조회
+ *     summary: 인파 변화 추이 조회 (HATEOAS 지원)
  *     tags: [Crowds]
  *     security:
  *       - bearerAuth: []
- *     description: 특정 지역의 인파 변화 히스토리와 통계를 조회합니다.
+ *     description: 특정 지역의 인파 변화 히스토리와 통계를 조회합니다. HATEOAS 링크를 포함합니다.
  *     parameters:
  *       - in: path
  *         name: areaCode
