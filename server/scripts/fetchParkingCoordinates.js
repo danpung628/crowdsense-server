@@ -6,6 +6,7 @@
 const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
+const { getS3Service } = require('../src/utils/s3Client');
 
 // Kakao REST API 키 (무료, 하루 30만건)
 // https://developers.kakao.com/ 에서 발급
@@ -133,9 +134,17 @@ function saveToFile(data, filename) {
     fs.mkdirSync(dirPath, { recursive: true });
   }
   
+  // 로컬 저장
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
   console.log(`\n💾 파일 저장 완료: ${filePath}`);
   console.log(`📊 총 ${Object.keys(data).length}개 주차장 좌표 저장됨`);
+
+  // S3 업로드 (EC2 환경에서 활성화)
+  const s3Service = getS3Service();
+  const s3Key = `data/${filename}`;
+  s3Service.uploadJsonFile(s3Key, filePath, data)
+    .catch(() => {})
+    .then(() => {});
 }
 
 /**
