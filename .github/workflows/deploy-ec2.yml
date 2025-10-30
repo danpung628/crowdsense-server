@@ -1,0 +1,43 @@
+name: Deploy to EC2 (SSH)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feat/ec2-setup-by-USER
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Copy server to EC2 via SSH
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "server"
+          target: "~/crowdsense-server"
+
+      - name: Install deps and restart via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -e
+            cd ~/crowdsense-server/server
+            npm ci
+            # Ensure .env exists on EC2 (manage separately or via secret sync)
+            pm2 startOrReload ecosystem.config.js || pm2 start ecosystem.config.js
+            pm2 save
+
