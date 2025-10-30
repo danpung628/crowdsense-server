@@ -1,0 +1,15 @@
+{
+  "name": "CrowdSense - 도심 인파관리 스마트시티",
+  "short_name": "CrowdSense",
+  "description": "서울시 인파 밀집도, 지하철 혼잡도, 주차장 정보를 제공하는 스마트시티 서비스",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "orientation": "portrait-primary",
+  "icons": [],
+  "categories": ["travel", "navigation", "utilities"],
+  "screenshots": [],
+  "related_applications": [],
+  "prefer_related_applications": false
+}
