@@ -96,7 +96,37 @@ export const parkingApi = {
       return [];
     }
     
-    return items;
+    // 서버 응답을 프론트 타입으로 매핑
+    return items.map((p: any) => {
+      const isPaid = Boolean(p.isPaidParking);
+      const basicFee = p.rates?.basic?.fee || 0;
+      const basicTime = p.rates?.basic?.time || 0;
+      const addFee = p.rates?.additional?.fee || 0;
+      const addTime = p.rates?.additional?.time || 0;
+      const dayMax = p.rates?.dayMax || 0;
+
+      const feeText = !isPaid || (basicFee === 0 && addFee === 0)
+        ? '무료'
+        : `기본 ${basicFee.toLocaleString()}원/${basicTime || 30}분, 추가 ${addFee.toLocaleString()}원/${addTime || 10}분${dayMax ? `, 일최대 ${dayMax.toLocaleString()}원` : ''}`;
+
+      const operatingTime = p.operatingHours
+        ? `평일 ${p.operatingHours.weekday || ''}, 주말 ${p.operatingHours.weekend || ''}, 공휴일 ${p.operatingHours.holiday || ''}`
+        : '';
+
+      return {
+        parkingId: p.parkingId || p.code,
+        district: p.district,
+        address: p.address,
+        total: p.total ?? 0,
+        available: p.available ?? 0,
+        fee: feeText,
+        latitude: p.coordinates?.latitude ?? p.latitude ?? 0,
+        longitude: p.coordinates?.longitude ?? p.longitude ?? 0,
+        operatingTime,
+        updatedAt: p.updatedAt || p.lastUpdated || new Date().toISOString(),
+        distance: typeof p.distance === 'number' ? p.distance : undefined,
+      } as ParkingLot;
+    });
   },
 
   // 특정 주차장 조회
@@ -109,18 +139,82 @@ export const parkingApi = {
   getNearby: async (
     latitude: number,
     longitude: number,
-    radius: number = 1000
+    radius: number = 1
   ): Promise<ParkingLot[]> => {
     const response = await apiClient.get('/parking/nearby', {
-      params: { lat: latitude, lng: longitude, radius },
+      // 서버는 km 단위를 기본으로 받음. 만약 meters를 사용한다면 unit=m으로 넘길 것.
+      params: { lat: latitude, lng: longitude, radius, unit: 'km' },
     });
-    return response.data.data || response.data;
+    const responseData = response.data.data || response.data;
+    const items = Array.isArray(responseData) ? responseData : (responseData.items || []);
+
+    return items.map((p: any) => {
+      const isPaid = Boolean(p.isPaidParking);
+      const basicFee = p.rates?.basic?.fee || 0;
+      const basicTime = p.rates?.basic?.time || 0;
+      const addFee = p.rates?.additional?.fee || 0;
+      const addTime = p.rates?.additional?.time || 0;
+      const dayMax = p.rates?.dayMax || 0;
+
+      const feeText = !isPaid || (basicFee === 0 && addFee === 0)
+        ? '무료'
+        : `기본 ${basicFee.toLocaleString()}원/${basicTime || 30}분, 추가 ${addFee.toLocaleString()}원/${addTime || 10}분${dayMax ? `, 일최대 ${dayMax.toLocaleString()}원` : ''}`;
+
+      const operatingTime = p.operatingHours
+        ? `평일 ${p.operatingHours.weekday || ''}, 주말 ${p.operatingHours.weekend || ''}, 공휴일 ${p.operatingHours.holiday || ''}`
+        : '';
+
+      return {
+        parkingId: p.parkingId || p.code,
+        district: p.district,
+        address: p.address,
+        total: p.total ?? 0,
+        available: p.available ?? 0,
+        fee: feeText,
+        latitude: p.coordinates?.latitude ?? p.latitude ?? 0,
+        longitude: p.coordinates?.longitude ?? p.longitude ?? 0,
+        operatingTime,
+        updatedAt: p.updatedAt || p.lastUpdated || new Date().toISOString(),
+        distance: typeof p.distance === 'number' ? p.distance : undefined,
+      } as ParkingLot;
+    });
   },
 
   // 구별 주차장 조회
   getByDistrict: async (district: string): Promise<ParkingLot[]> => {
     const response = await apiClient.get(`/parking/district/${district}`);
-    return response.data.data || response.data;
+    const responseData = response.data.data || response.data;
+    const items = Array.isArray(responseData) ? responseData : (responseData.items || []);
+    return items.map((p: any) => {
+      const isPaid = Boolean(p.isPaidParking);
+      const basicFee = p.rates?.basic?.fee || 0;
+      const basicTime = p.rates?.basic?.time || 0;
+      const addFee = p.rates?.additional?.fee || 0;
+      const addTime = p.rates?.additional?.time || 0;
+      const dayMax = p.rates?.dayMax || 0;
+
+      const feeText = !isPaid || (basicFee === 0 && addFee === 0)
+        ? '무료'
+        : `기본 ${basicFee.toLocaleString()}원/${basicTime || 30}분, 추가 ${addFee.toLocaleString()}원/${addTime || 10}분${dayMax ? `, 일최대 ${dayMax.toLocaleString()}원` : ''}`;
+
+      const operatingTime = p.operatingHours
+        ? `평일 ${p.operatingHours.weekday || ''}, 주말 ${p.operatingHours.weekend || ''}, 공휴일 ${p.operatingHours.holiday || ''}`
+        : '';
+
+      return {
+        parkingId: p.parkingId || p.code,
+        district: p.district,
+        address: p.address,
+        total: p.total ?? 0,
+        available: p.available ?? 0,
+        fee: feeText,
+        latitude: p.coordinates?.latitude ?? p.latitude ?? 0,
+        longitude: p.coordinates?.longitude ?? p.longitude ?? 0,
+        operatingTime,
+        updatedAt: p.updatedAt || p.lastUpdated || new Date().toISOString(),
+        distance: typeof p.distance === 'number' ? p.distance : undefined,
+      } as ParkingLot;
+    });
   },
 
   // 검색

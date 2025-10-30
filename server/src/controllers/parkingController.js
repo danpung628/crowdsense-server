@@ -89,7 +89,7 @@ exports.getByDistrict = async (req, res) => {
 // 주변 주차장 추천
 exports.getNearbyParking = async (req, res) => {
   try {
-    const { lat, lng, radius } = req.query;
+    const { lat, lng, radius, unit } = req.query;
     
     if (!lat || !lng) {
       return res.status(400).json(errorResponse({
@@ -97,7 +97,16 @@ exports.getNearbyParking = async (req, res) => {
       }));
     }
     
-    const radiusValue = parseFloat(radius) || 1;
+    let radiusValue = parseFloat(radius);
+    // 기본 반경: 1km
+    if (Number.isNaN(radiusValue)) {
+      radiusValue = 1;
+    }
+    // 단위 처리: unit=m 이면 미터로 들어온 값을 km로 변환
+    // 또는 값이 충분히 크면(> 50) 미터로 간주하여 km로 변환
+    if ((unit && unit.toLowerCase() === 'm') || radiusValue > 50) {
+      radiusValue = radiusValue / 1000;
+    }
     const data = await parkingService.findNearbyParking(
       parseFloat(lat),
       parseFloat(lng),
@@ -106,7 +115,7 @@ exports.getNearbyParking = async (req, res) => {
     
     // HATEOAS 링크
     const links = {
-      self: { href: `/api/parking/nearby?lat=${lat}&lng=${lng}&radius=${radiusValue}` },
+      self: { href: `/api/parking/nearby?lat=${lat}&lng=${lng}&radius=${radiusValue}&unit=km` },
       all: { href: '/api/parking' }
     };
     
