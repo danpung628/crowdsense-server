@@ -11,15 +11,8 @@ const { authenticate } = require("../middlewares/authMiddleware");
  *     tags: [Rankings]
  *     security:
  *       - bearerAuth: []
- *     description: 평균 인구수 기준 인기 장소 랭킹을 조회합니다. HATEOAS 링크를 포함합니다.
+ *     description: 평균 인구수 기준 인기 장소 랭킹을 조회합니다. HATEOAS 링크를 포함하며 모든 데이터를 자동으로 반환합니다.
  *     parameters:
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           default: 10
- *           example: 10
- *         description: 조회할 랭킹 개수
  *       - in: query
  *         name: category
  *         schema:
@@ -70,6 +63,28 @@ const { authenticate } = require("../middlewares/authMiddleware");
  *                       avgCongestion:
  *                         type: number
  *                         example: 4.5
+ *                 _links:
+ *                   type: object
+ *                   description: HATEOAS 링크
+ *                   properties:
+ *                     self:
+ *                       type: object
+ *                       properties:
+ *                         href:
+ *                           type: string
+ *                           example: /api/rankings/popular
+ *                     areas:
+ *                       type: object
+ *                       properties:
+ *                         href:
+ *                           type: string
+ *                           example: /api/areas
+ *                     crowds:
+ *                       type: object
+ *                       properties:
+ *                         href:
+ *                           type: string
+ *                           example: /api/crowds
  *       401:
  *         description: 인증 실패
  *         content:

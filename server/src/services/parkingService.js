@@ -2,7 +2,7 @@
 const axios = require("axios");
 const { getRedisClient } = require("../utils/redisClient");
 const { generateParkingCoordinates } = require("../utils/districtCoordinates");
-const { loadCoordinates, generateCoordinatesFile } = require("../data/parkingCoordinatesLoader");
+const { loadCoordinates, loadCoordinatesSync, generateCoordinatesFile } = require("../data/parkingCoordinatesLoader");
 
 class ParkingService {
   constructor() {
@@ -28,8 +28,13 @@ class ParkingService {
   }
   
   async initialize() {
-    // 좌표 파일 로드 시도
-    this.parkingCoords = loadCoordinates();
+    // S3/로컬에서 좌표 파일 로드 시도 (비동기)
+    try {
+      this.parkingCoords = await loadCoordinates();
+    } catch (error) {
+      console.log('⚠️ 비동기 로드 실패, 동기 로드 시도...');
+      this.parkingCoords = loadCoordinatesSync();
+    }
     
     // 파일이 없으면 생성
     if (!this.parkingCoords) {

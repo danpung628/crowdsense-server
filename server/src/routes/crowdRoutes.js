@@ -7,26 +7,12 @@ const { authenticate } = require("../middlewares/authMiddleware");
  * @swagger
  * /api/crowds:
  *   get:
- *     summary: 전체 인구 밀집도 조회 (페이지네이션, 필터링, 정렬, HATEOAS 지원)
+ *     summary: 전체 인구 밀집도 조회 (필터링, 정렬, HATEOAS 지원)
  *     tags: [Crowds]
  *     security:
  *       - bearerAuth: []
- *     description: 서울시 전체 POI(관심지점)의 인구 밀집도 데이터를 조회합니다. 페이지네이션, 필터링, 정렬을 지원하며 HATEOAS 링크를 포함합니다.
+ *     description: 서울시 전체 POI(관심지점)의 인구 밀집도 데이터를 조회합니다. 필터링, 정렬을 지원하며 HATEOAS 링크를 포함합니다. 모든 데이터를 자동으로 반환합니다.
  *     parameters:
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *           default: 1
- *           example: 1
- *         description: 페이지 번호
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           default: 20
- *           example: 20
- *         description: 페이지당 항목 수
  *       - in: query
  *         name: category
  *         schema:
@@ -75,21 +61,10 @@ const { authenticate } = require("../middlewares/authMiddleware");
  *                           fetchedAt:
  *                             type: string
  *                             format: date-time
- *                     pagination:
- *                       type: object
- *                       properties:
- *                         page:
- *                           type: integer
- *                           example: 1
- *                         limit:
- *                           type: integer
- *                           example: 20
- *                         total:
- *                           type: integer
- *                           example: 128
- *                         totalPages:
- *                           type: integer
- *                           example: 7
+ *                     total:
+ *                       type: integer
+ *                       example: 128
+ *                       description: 전체 항목 수
  *                 _links:
  *                   type: object
  *                   description: HATEOAS 링크
@@ -99,15 +74,7 @@ const { authenticate } = require("../middlewares/authMiddleware");
  *                       properties:
  *                         href:
  *                           type: string
- *                           example: /api/crowds?page=1&limit=20
- *                     first:
- *                       type: object
- *                     last:
- *                       type: object
- *                     prev:
- *                       type: object
- *                     next:
- *                       type: object
+ *                           example: /api/crowds
  *       401:
  *         description: 인증 실패
  *         content:

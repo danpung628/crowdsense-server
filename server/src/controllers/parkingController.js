@@ -5,8 +5,6 @@ const { successResponse, errorResponse } = require("../utils/errorHandler");
 exports.getAllParking = async (req, res) => {
   try {
     // 쿼리 파라미터 파싱
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 50;
     const district = req.query.district;
     const available = req.query.available; // 'true' or 'false'
     const sort = req.query.sort;
@@ -44,12 +42,6 @@ exports.getAllParking = async (req, res) => {
       });
     }
     
-    // 페이지네이션
-    const total = allData.length;
-    const totalPages = Math.ceil(total / limit);
-    const skip = (page - 1) * limit;
-    const data = allData.slice(skip, skip + limit);
-    
     // HATEOAS 링크
     const baseUrl = '/api/parking';
     const queryParams = new URLSearchParams();
@@ -57,31 +49,16 @@ exports.getAllParking = async (req, res) => {
     if (available) queryParams.set('available', available);
     if (sort) queryParams.set('sort', sort);
     if (order !== 'asc') queryParams.set('order', order);
-    queryParams.set('limit', limit);
     
     const queryString = queryParams.toString();
     const links = {
-      self: { href: `${baseUrl}?page=${page}&${queryString}` },
-      first: { href: `${baseUrl}?page=1&${queryString}` },
-      last: { href: `${baseUrl}?page=${totalPages}&${queryString}` }
+      self: { href: `${baseUrl}${queryString ? '?' + queryString : ''}` }
     };
-    
-    if (page > 1) {
-      links.prev = { href: `${baseUrl}?page=${page - 1}&${queryString}` };
-    }
-    if (page < totalPages) {
-      links.next = { href: `${baseUrl}?page=${page + 1}&${queryString}` };
-    }
     
     // 응답 데이터
     const response = {
-      items: data,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages
-      }
+      items: allData,
+      total: allData.length
     };
     
     res.json(successResponse(response, null, links));

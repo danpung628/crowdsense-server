@@ -4,11 +4,10 @@ const { successResponse, errorResponse } = require("../utils/errorHandler");
 // 인기 장소 랭킹 조회
 exports.getPopularPlaces = async (req, res) => {
   try {
-    const { limit, category, hours } = req.query;
-    const limitValue = parseInt(limit) || 10;
+    const { category, hours } = req.query;
     const hoursValue = parseInt(hours) || 24;
     const data = await rankingService.getPopularPlaces(
-      limitValue,
+      null, // limit을 null로 전달하여 모든 데이터 반환
       category || null,
       hoursValue
     );
@@ -16,12 +15,12 @@ exports.getPopularPlaces = async (req, res) => {
     // HATEOAS 링크
     const baseUrl = '/api/rankings/popular';
     const queryParams = new URLSearchParams();
-    queryParams.set('limit', limitValue);
     if (category) queryParams.set('category', category);
     queryParams.set('hours', hoursValue);
     
+    const queryString = queryParams.toString();
     const links = {
-      self: { href: `${baseUrl}?${queryParams.toString()}` },
+      self: { href: `${baseUrl}${queryString ? '?' + queryString : ''}` },
       areas: { href: '/api/areas' },
       crowds: { href: '/api/crowds' }
     };
