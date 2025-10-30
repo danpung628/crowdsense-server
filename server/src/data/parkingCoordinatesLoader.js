@@ -6,10 +6,12 @@
 const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
+const { getS3Service } = require('../utils/s3Client');
 
 const SEOUL_API_URL = 'http://openapi.seoul.go.kr:8088';
 const SEOUL_API_KEY = '47464b765073696c33366142537a7a';
 const COORDS_FILE = path.join(__dirname, 'parkingCoordinates.json');
+const S3_KEY = 'data/parkingCoordinates.json';
 
 const districts = [
   '강남구', '강동구', '강북구', '강서구', '관악구',
@@ -138,19 +140,62 @@ async function generateCoordinatesFile() {
     console.log(`  ${district} 완료: ${parkings.length}개 처리`);
   }
   
-  fs.writeFileSync(COORDS_FILE, JSON.stringify(parkingCoordinates, null, 2), 'utf-8');
   console.log(`\n✅ 주차장 좌표 파일 생성 완료: ${totalCount}개`);
-  console.log(`📁 저장 위치: ${COORDS_FILE}`);
+  
+  // S3와 로컬에 동시 저장
+  const s3Service = getS3Service();
+  try {
+    await s3Service.uploadJsonFile(S3_KEY, COORDS_FILE, parkingCoordinates);
+  } catch (error) {
+    // S3 실패해도 로컬 저장은 유지
+    fs.writeFileSync(COORDS_FILE, JSON.stringify(parkingCoordinates, null, 2), 'utf-8');
+    console.log(`💾 로컬에만 저장 완료: ${COORDS_FILE}`);
+  }
   
   return parkingCoordinates;
 }
 
-function loadCoordinates() {
+async function loadCoordinates() {
+  const s3Service = getS3Service();
+  
+  // S3에서 먼저 로드 시도 (EC2 환경인 경우)
+  if (s3Service.isS3Available()) {
+    try {
+      console.log('📡 S3에서 주차장 좌표 로드 시도...');
+      const coords = await s3Service.downloadJsonFile(S3_KEY, COORDS_FILE);
+      if (coords) {
+        console.log(`📂 S3에서 주차장 좌표 로드: ${Object.keys(coords).length}개`);
+        return coords;
+      }
+    } catch (error) {
+      console.log('⚠️ S3 로드 실패, 로컬 파일 시도...');
+    }
+  }
+  
+  // 로컬 파일에서 로드
   if (fs.existsSync(COORDS_FILE)) {
     try {
       const data = fs.readFileSync(COORDS_FILE, 'utf-8');
       const coords = JSON.parse(data);
-      console.log(`📂 주차장 좌표 로드: ${Object.keys(coords).length}개`);
+      console.log(`📂 로컬에서 주차장 좌표 로드: ${Object.keys(coords).length}개`);
+      return coords;
+    } catch (error) {
+      console.error('주차장 좌표 파일 로드 실패:', error.message);
+      return null;
+    }
+  }
+  
+  console.log('📁 주차장 좌표 파일을 찾을 수 없습니다');
+  return null;
+}
+
+// 동기 버전 (기존 호환성 유지)
+function loadCoordinatesSync() {
+  if (fs.existsSync(COORDS_FILE)) {
+    try {
+      const data = fs.readFileSync(COORDS_FILE, 'utf-8');
+      const coords = JSON.parse(data);
+      console.log(`📂 주차장 좌표 로드 (동기): ${Object.keys(coords).length}개`);
       return coords;
     } catch (error) {
       console.error('주차장 좌표 파일 로드 실패:', error.message);
@@ -160,14 +205,21 @@ function loadCoordinates() {
   return null;
 }
 
-function getCoordinates(parkingId) {
-  const coords = loadCoordinates();
+async function getCoordinates(parkingId) {
+  const coords = await loadCoordinates();
+  return coords ? coords[parkingId] : null;
+}
+
+function getCoordinatesSync(parkingId) {
+  const coords = loadCoordinatesSync();
   return coords ? coords[parkingId] : null;
 }
 
 module.exports = {
   generateCoordinatesFile,
   loadCoordinates,
-  getCoordinates
+  loadCoordinatesSync,
+  getCoordinates,
+  getCoordinatesSync
 };
 

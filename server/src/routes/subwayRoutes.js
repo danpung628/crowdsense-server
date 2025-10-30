@@ -7,24 +7,12 @@ const { authenticate } = require("../middlewares/authMiddleware");
  * @swagger
  * /api/subway:
  *   get:
- *     summary: 전체 지하철 혼잡도 조회 (페이지네이션, 정렬, HATEOAS 지원)
+ *     summary: 전체 지하철 혼잡도 조회 (정렬, HATEOAS 지원)
  *     tags: [Subway]
  *     security:
  *       - bearerAuth: []
- *     description: 서울시 전체 지하철역의 실시간 혼잡도 데이터를 조회합니다. 페이지네이션, 정렬, HATEOAS 링크를 지원합니다.
+ *     description: 서울시 전체 지하철역의 실시간 혼잡도 데이터를 조회합니다. 정렬, HATEOAS 링크를 지원합니다. 모든 데이터를 자동으로 반환합니다.
  *     parameters:
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *           default: 1
- *         description: 페이지 번호
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           default: 20
- *         description: 페이지당 항목 수
  *       - in: query
  *         name: sort
  *         schema:
@@ -49,28 +37,45 @@ const { authenticate } = require("../middlewares/authMiddleware");
  *                   type: boolean
  *                   example: true
  *                 data:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       stationId:
- *                         type: string
- *                         example: S001
- *                       stationName:
- *                         type: string
- *                         example: 강남역
- *                       line:
- *                         type: string
- *                         example: 2호선
- *                       congestion:
- *                         type: string
- *                         example: 매우혼잡
- *                       level:
- *                         type: integer
- *                         example: 5
- *                       updatedAt:
- *                         type: string
- *                         format: date-time
+ *                   type: object
+ *                   properties:
+ *                     items:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           stationId:
+ *                             type: string
+ *                             example: S001
+ *                           stationName:
+ *                             type: string
+ *                             example: 강남역
+ *                           line:
+ *                             type: string
+ *                             example: 2호선
+ *                           congestion:
+ *                             type: string
+ *                             example: 매우혼잡
+ *                           level:
+ *                             type: integer
+ *                             example: 5
+ *                           updatedAt:
+ *                             type: string
+ *                             format: date-time
+ *                     total:
+ *                       type: integer
+ *                       example: 150
+ *                       description: 전체 항목 수
+ *                 _links:
+ *                   type: object
+ *                   description: HATEOAS 링크
+ *                   properties:
+ *                     self:
+ *                       type: object
+ *                       properties:
+ *                         href:
+ *                           type: string
+ *                           example: /api/subway
  *       401:
  *         description: 인증 실패
  *         content:

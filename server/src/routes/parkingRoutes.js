@@ -7,24 +7,12 @@ const { authenticate } = require("../middlewares/authMiddleware");
  * @swagger
  * /api/parking:
  *   get:
- *     summary: 전체 주차장 정보 조회 (페이지네이션, 필터링, 정렬, HATEOAS 지원)
+ *     summary: 전체 주차장 정보 조회 (필터링, 정렬, HATEOAS 지원)
  *     tags: [Parking]
  *     security:
  *       - bearerAuth: []
- *     description: 서울시 전체 주차장의 실시간 가용 정보를 조회합니다. 페이지네이션, 필터링, 정렬, HATEOAS 링크를 지원합니다.
+ *     description: 서울시 전체 주차장의 실시간 가용 정보를 조회합니다. 필터링, 정렬, HATEOAS 링크를 지원합니다. 모든 데이터를 자동으로 반환합니다.
  *     parameters:
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *           default: 1
- *         description: 페이지 번호
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           default: 50
- *         description: 페이지당 항목 수
  *       - in: query
  *         name: district
  *         schema:
@@ -62,37 +50,54 @@ const { authenticate } = require("../middlewares/authMiddleware");
  *                   type: boolean
  *                   example: true
  *                 data:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       parkingId:
- *                         type: string
- *                         example: P001
- *                       name:
- *                         type: string
- *                         example: 강남역 공영주차장
- *                       available:
- *                         type: integer
- *                         example: 45
- *                       total:
- *                         type: integer
- *                         example: 100
- *                       fee:
- *                         type: integer
- *                         example: 3000
- *                       address:
- *                         type: string
- *                         example: 서울시 강남구 역삼동
- *                       latitude:
- *                         type: number
- *                         example: 37.497942
- *                       longitude:
- *                         type: number
- *                         example: 127.027621
- *                       updatedAt:
- *                         type: string
- *                         format: date-time
+ *                   type: object
+ *                   properties:
+ *                     items:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           parkingId:
+ *                             type: string
+ *                             example: P001
+ *                           name:
+ *                             type: string
+ *                             example: 강남역 공영주차장
+ *                           available:
+ *                             type: integer
+ *                             example: 45
+ *                           total:
+ *                             type: integer
+ *                             example: 100
+ *                           fee:
+ *                             type: integer
+ *                             example: 3000
+ *                           address:
+ *                             type: string
+ *                             example: 서울시 강남구 역삼동
+ *                           latitude:
+ *                             type: number
+ *                             example: 37.497942
+ *                           longitude:
+ *                             type: number
+ *                             example: 127.027621
+ *                           updatedAt:
+ *                             type: string
+ *                             format: date-time
+ *                     total:
+ *                       type: integer
+ *                       example: 500
+ *                       description: 전체 항목 수
+ *                 _links:
+ *                   type: object
+ *                   description: HATEOAS 링크
+ *                   properties:
+ *                     self:
+ *                       type: object
+ *                       properties:
+ *                         href:
+ *                           type: string
+ *                           example: /api/parking
  *       401:
  *         description: 인증 실패
  *         content:

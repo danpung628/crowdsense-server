@@ -4,43 +4,19 @@ const { successResponse, errorResponse } = require("../utils/errorHandler");
 // 전체 지역 코드 매핑 조회
 exports.getAllAreas = async (req, res) => {
   try {
-    // 쿼리 파라미터 파싱
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 50;
-    
     const allData = areaMapping.getAllAreas();
-    
-    // 페이지네이션
-    const total = allData.length;
-    const totalPages = Math.ceil(total / limit);
-    const skip = (page - 1) * limit;
-    const data = allData.slice(skip, skip + limit);
     
     // HATEOAS 링크
     const baseUrl = '/api/areas';
     const links = {
-      self: { href: `${baseUrl}?page=${page}&limit=${limit}` },
-      first: { href: `${baseUrl}?page=1&limit=${limit}` },
-      last: { href: `${baseUrl}?page=${totalPages}&limit=${limit}` },
+      self: { href: baseUrl },
       categories: { href: `${baseUrl}/categories` }
     };
     
-    if (page > 1) {
-      links.prev = { href: `${baseUrl}?page=${page - 1}&limit=${limit}` };
-    }
-    if (page < totalPages) {
-      links.next = { href: `${baseUrl}?page=${page + 1}&limit=${limit}` };
-    }
-    
     // 응답 데이터
     const response = {
-      items: data,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages
-      }
+      items: allData,
+      total: allData.length
     };
     
     res.json(successResponse(response, null, links));

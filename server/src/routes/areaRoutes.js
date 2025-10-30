@@ -7,24 +7,11 @@ const { authenticate } = require("../middlewares/authMiddleware");
  * @swagger
  * /api/areas:
  *   get:
- *     summary: 전체 지역 코드 조회 (페이지네이션, HATEOAS 지원)
+ *     summary: 전체 지역 코드 조회 (HATEOAS 지원)
  *     tags: [Areas]
  *     security:
  *       - bearerAuth: []
- *     description: 서울시 전체 POI 지역 코드와 이름 매핑 정보를 조회합니다. 페이지네이션과 HATEOAS 링크를 지원합니다.
- *     parameters:
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *           default: 1
- *         description: 페이지 번호
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           default: 50
- *         description: 페이지당 항목 수
+ *     description: 서울시 전체 POI 지역 코드와 이름 매핑 정보를 조회합니다. HATEOAS 링크를 지원하며 모든 데이터를 자동으로 반환합니다.
  *     responses:
  *       200:
  *         description: 성공
@@ -37,25 +24,48 @@ const { authenticate } = require("../middlewares/authMiddleware");
  *                   type: boolean
  *                   example: true
  *                 data:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       category:
- *                         type: string
- *                         example: 관광특구
- *                       no:
- *                         type: integer
- *                         example: 1
- *                       areaCode:
- *                         type: string
- *                         example: POI001
- *                       areaName:
- *                         type: string
- *                         example: 강남 MICE 관광특구
- *                       engName:
- *                         type: string
- *                         example: Gangnam MICE Special Tourist Zone
+ *                   type: object
+ *                   properties:
+ *                     items:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           category:
+ *                             type: string
+ *                             example: 관광특구
+ *                           no:
+ *                             type: integer
+ *                             example: 1
+ *                           areaCode:
+ *                             type: string
+ *                             example: POI001
+ *                           areaName:
+ *                             type: string
+ *                             example: 강남 MICE 관광특구
+ *                           engName:
+ *                             type: string
+ *                             example: Gangnam MICE Special Tourist Zone
+ *                     total:
+ *                       type: integer
+ *                       example: 128
+ *                       description: 전체 항목 수
+ *                 _links:
+ *                   type: object
+ *                   description: HATEOAS 링크
+ *                   properties:
+ *                     self:
+ *                       type: object
+ *                       properties:
+ *                         href:
+ *                           type: string
+ *                           example: /api/areas
+ *                     categories:
+ *                       type: object
+ *                       properties:
+ *                         href:
+ *                           type: string
+ *                           example: /api/areas/categories
  *       401:
  *         description: 인증 실패
  *         content:

@@ -28,9 +28,13 @@ class RankingService {
           avgCongestion: { $avg: '$congestionLevel' }
         }
       },
-      { $sort: { avgPeople: -1 } },
-      { $limit: limit }
+      { $sort: { avgPeople: -1 } }
     ];
+
+    // limit이 null이 아닐 때만 $limit 스테이지 추가
+    if (limit !== null) {
+      pipeline.push({ $limit: limit });
+    }
 
     const rankings = await CrowdHistory.aggregate(pipeline);
 
