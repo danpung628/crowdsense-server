@@ -365,6 +365,8 @@ TTL: 600초 (10분)
   - 로그아웃
 - `POST /api/auth/refresh` → Lambda: `auth-refresh`
   - 토큰 갱신
+- `GET /api/auth/me` → Lambda: `auth-me`
+  - 사용자 정보 조회
 
 #### 인파 데이터 API (`/api/crowds/*`)
 - `GET /api/crowds` → Lambda: `crowd-list`
@@ -377,14 +379,16 @@ TTL: 600초 (10분)
 #### 교통 데이터 API (`/api/subway/*`)
 - `GET /api/subway` → Lambda: `subway-list`
   - 지하철 혼잡도 조회
-- `GET /api/subway/{stationCode}` → Lambda: `subway-detail`
-  - 특정 역 혼잡도 조회
+- `GET /api/subway/{areaCode}` → Lambda: `subway-detail`
+  - 특정 지역 지하철 혼잡도 조회
 
 #### 주차장 데이터 API (`/api/parking/*`)
 - `GET /api/parking` → Lambda: `parking-list`
   - 주차장 현황 조회
-- `GET /api/parking/nearby?lat={lat}&lng={lng}` → Lambda: `parking-nearby`
+- `GET /api/parking/nearby?lat={lat}&lng={lng}&radius={radius}` → Lambda: `parking-nearby`
   - 주변 주차장 검색
+- `GET /api/parking/district/{district}` → Lambda: `parking-district`
+  - 자치구별 주차장 정보 조회
 
 #### 랭킹 API (`/api/rankings/*`)
 - `GET /api/rankings/popular` → Lambda: `ranking-popular`
@@ -392,7 +396,13 @@ TTL: 600초 (10분)
 
 #### 지역 정보 API (`/api/areas/*`)
 - `GET /api/areas` → Lambda: `area-list`
-  - 지역 정보 조회
+  - 전체 지역 정보 조회
+- `GET /api/areas/categories` → Lambda: `area-categories`
+  - 카테고리 목록 조회
+- `GET /api/areas/search?q={query}` → Lambda: `area-search`
+  - 지역명 검색 (한글/영문)
+- `GET /api/areas/category/{category}` → Lambda: `area-category`
+  - 카테고리별 지역 조회
 - `GET /api/areas/{areaCode}` → Lambda: `area-detail`
   - 특정 지역 정보 조회
 
@@ -437,7 +447,9 @@ lambda-functions/
 │   │   └── index.js
 │   ├── logout/
 │   │   └── index.js
-│   └── refresh/
+│   ├── refresh/
+│   │   └── index.js
+│   └── me/
 │       └── index.js
 ├── crowd/
 │   ├── list/
@@ -454,13 +466,21 @@ lambda-functions/
 ├── parking/
 │   ├── list/
 │   │   └── index.js
-│   └── nearby/
+│   ├── nearby/
+│   │   └── index.js
+│   └── district/
 │       └── index.js
 ├── ranking/
 │   └── popular/
 │       └── index.js
 └── area/
     ├── list/
+    │   └── index.js
+    ├── categories/
+    │   └── index.js
+    ├── search/
+    │   └── index.js
+    ├── category/
     │   └── index.js
     └── detail/
         └── index.js
