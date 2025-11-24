@@ -1,0 +1,39 @@
+title CrowdSense Microservices Architecture
+
+// Central API Gateway
+API Gateway [icon: aws-api-gateway, color: blue, size: large, label: "API Gateway\nSingle Entry Point\n/api/*"]
+
+// Microservices (Circular Layout)
+Crowd Service [icon: aws-lambda, color: yellow, label: "Crowd Service\n/api/crowds\nPopulation Density"]
+Subway Service [icon: aws-lambda, color: yellow, label: "Subway Service\n/api/subway\nSubway Congestion"]
+Parking Service [icon: aws-lambda, color: yellow, label: "Parking Service\n/api/parking\nParking Info"]
+Area Service [icon: aws-lambda, color: yellow, label: "Area Service\n/api/areas\nArea Information"]
+Ranking Service [icon: aws-lambda, color: yellow, label: "Ranking Service\n/api/rankings\nPopular Places"]
+Auth Service [icon: aws-lambda, color: yellow, label: "Auth Service\n/api/auth\nAuthentication"]
+
+// Data Layer
+MongoDB Atlas [icon: mongodb, color: green, label: "MongoDB Atlas\nMain Database"]
+Redis ElastiCache [icon: aws-elasticache, color: red, label: "Redis/ElastiCache\nCaching Layer"]
+
+// Connections from API Gateway to all services
+API Gateway > Crowd Service [label: "Route /api/crowds"]
+API Gateway > Subway Service [label: "Route /api/subway"]
+API Gateway > Parking Service [label: "Route /api/parking"]
+API Gateway > Area Service [label: "Route /api/areas"]
+API Gateway > Ranking Service [label: "Route /api/rankings"]
+API Gateway > Auth Service [label: "Route /api/auth"]
+
+// Connections from all services to MongoDB
+Crowd Service > MongoDB Atlas [label: "Store/Query"]
+Subway Service > MongoDB Atlas [label: "Store/Query"]
+Parking Service > MongoDB Atlas [label: "Store/Query"]
+Area Service > MongoDB Atlas [label: "Store/Query"]
+Ranking Service > MongoDB Atlas [label: "Store/Query"]
+Auth Service > MongoDB Atlas [label: "User Data"]
+
+// Connections to Redis (only services that actually use it)
+Crowd Service > Redis ElastiCache [label: "Cache", style: dashed]
+Subway Service > Redis ElastiCache [label: "Cache", style: dashed]
+Parking Service > Redis ElastiCache [label: "Cache", style: dashed]
+Auth Service > Redis ElastiCache [label: "Session Cache", style: dashed]
+

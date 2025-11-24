@@ -1,0 +1,78 @@
+title CrowdSense AWS Serverless Architecture
+
+// 1. Client Layer
+Client Layer [icon: users, color: black] {
+  React Web App [icon: react]
+  PWA [icon: smartphone]
+}
+
+// 2. CDN Layer
+CDN Layer [icon: aws-cloudfront, color: orange] {
+  CloudFront [icon: aws-cloudfront]
+  S3 Static Files [icon: aws-s3, label: "S3 (Static Files)"]
+}
+
+// 3. API Layer
+API Layer [icon: aws-api-gateway, color: blue] {
+  API Gateway [icon: aws-api-gateway, label: "API Gateway (REST API)"]
+}
+
+// 4. Lambda Functions Layer
+Lambda Functions [icon: aws-lambda, color: yellow] {
+  Crowd Service [icon: aws-lambda, label: "Crowd Service\n/api/crowds"]
+  Subway Service [icon: aws-lambda, label: "Subway Service\n/api/subway"]
+  Parking Service [icon: aws-lambda, label: "Parking Service\n/api/parking"]
+  Area Service [icon: aws-lambda, label: "Area Service\n/api/areas"]
+  Ranking Service [icon: aws-lambda, label: "Ranking Service\n/api/rankings"]
+  Auth Service [icon: aws-lambda, label: "Auth Service\n/api/auth"]
+}
+
+// 5. Data Layer
+Data Layer [icon: database, color: green] {
+  MongoDB Atlas [icon: mongodb]
+  Redis ElastiCache [icon: aws-elasticache, label: "Redis/ElastiCache"]
+}
+
+// 6. External API Layer
+Seoul Public Data API [icon: globe, color: purple]
+
+// Connections
+
+// Client to CDN
+React Web App > CloudFront [label: "Static Files"]
+PWA > CloudFront [label: "Static Files"]
+CloudFront > S3 Static Files
+
+// Client to API
+React Web App > API Gateway [label: "API Requests"]
+PWA > API Gateway [label: "API Requests"]
+
+// API Gateway to ALL Lambda Functions
+API Gateway > Crowd Service [label: "/api/crowds"]
+API Gateway > Subway Service [label: "/api/subway"]
+API Gateway > Parking Service [label: "/api/parking"]
+API Gateway > Area Service [label: "/api/areas"]
+API Gateway > Ranking Service [label: "/api/rankings"]
+API Gateway > Auth Service [label: "/api/auth"]
+
+// Lambda Functions to External API (Auth Service 제외)
+Crowd Service > Seoul Public Data API [label: "Population Data", style: dashed]
+Subway Service > Seoul Public Data API [label: "Subway Data", style: dashed]
+Parking Service > Seoul Public Data API [label: "Parking Data", style: dashed]
+Area Service > Seoul Public Data API [label: "Area Data", style: dashed]
+Ranking Service > Seoul Public Data API [label: "Ranking Data", style: dashed]
+
+// Lambda Functions to Data Layer
+Crowd Service > MongoDB Atlas [label: "Store/Query"]
+Crowd Service > Redis ElastiCache [label: "Cache", style: dashed]
+Subway Service > MongoDB Atlas [label: "Store/Query"]
+Subway Service > Redis ElastiCache [label: "Cache", style: dashed]
+Parking Service > MongoDB Atlas [label: "Store/Query"]
+Parking Service > Redis ElastiCache [label: "Cache", style: dashed]
+Area Service > MongoDB Atlas [label: "Store/Query"]
+Area Service > Redis ElastiCache [label: "Cache", style: dashed]
+Ranking Service > MongoDB Atlas [label: "Store/Query"]
+Ranking Service > Redis ElastiCache [label: "Cache", style: dashed]
+Auth Service > MongoDB Atlas [label: "User Data"]
+Auth Service > Redis ElastiCache [label: "Session Cache", style: dashed]
+

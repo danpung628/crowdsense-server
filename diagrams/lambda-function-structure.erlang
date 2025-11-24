@@ -1,0 +1,118 @@
+title Lambda Function Internal Structure
+
+// Shared Common Code (Top Level)
+Shared Code [icon: folder, color: blue, size: large, label: "shared/\nCommon Code\n(All Lambda Functions Use This)"]
+
+// Shared Components
+Utils Folder [icon: folder, color: lightblue, label: "utils/"]
+Area Mapping [icon: file, label: "areaMapping.js"]
+Error Handler [icon: file, label: "errorHandler.js"]
+JWT Utils [icon: file, label: "jwtUtils.js"]
+Redis Client [icon: file, label: "redisClient.js"]
+
+Models Folder [icon: folder, color: lightblue, label: "models/"]
+User Model [icon: file, label: "User.js"]
+Crowd History [icon: file, label: "CrowdHistory.js"]
+
+Config Folder [icon: folder, color: lightblue, label: "config/"]
+Database Config [icon: file, label: "database.js"]
+
+// Individual Lambda Services
+Crowd Service [icon: folder, color: yellow, label: "crowd-service/"]
+Crowd Handler [icon: file, label: "handler.js"]
+Crowd Service File [icon: file, label: "service.js"]
+Crowd Controller [icon: file, label: "controller.js"]
+
+Subway Service [icon: folder, color: yellow, label: "subway-service/"]
+Subway Handler [icon: file, label: "handler.js"]
+Subway Service File [icon: file, label: "service.js"]
+Subway Controller [icon: file, label: "controller.js"]
+
+Parking Service [icon: folder, color: yellow, label: "parking-service/"]
+Parking Handler [icon: file, label: "handler.js"]
+Parking Service File [icon: file, label: "service.js"]
+Parking Controller [icon: file, label: "controller.js"]
+
+Area Service [icon: folder, color: yellow, label: "area-service/"]
+Area Handler [icon: file, label: "handler.js"]
+Area Service File [icon: file, label: "service.js"]
+Area Controller [icon: file, label: "controller.js"]
+
+Ranking Service [icon: folder, color: yellow, label: "ranking-service/"]
+Ranking Handler [icon: file, label: "handler.js"]
+Ranking Service File [icon: file, label: "service.js"]
+Ranking Controller [icon: file, label: "controller.js"]
+
+Auth Service [icon: folder, color: yellow, label: "auth-service/"]
+Auth Handler [icon: file, label: "handler.js"]
+Auth Service File [icon: file, label: "service.js"]
+Auth Controller [icon: file, label: "controller.js"]
+
+// Hierarchical Structure - Shared Code
+Shared Code > Utils Folder
+Shared Code > Models Folder
+Shared Code > Config Folder
+
+Utils Folder > Area Mapping
+Utils Folder > Error Handler
+Utils Folder > JWT Utils
+Utils Folder > Redis Client
+
+Models Folder > User Model
+Models Folder > Crowd History
+
+Config Folder > Database Config
+
+// Hierarchical Structure - Each Service
+Crowd Service > Crowd Handler
+Crowd Service > Crowd Service File
+Crowd Service > Crowd Controller
+
+Subway Service > Subway Handler
+Subway Service > Subway Service File
+Subway Service > Subway Controller
+
+Parking Service > Parking Handler
+Parking Service > Parking Service File
+Parking Service > Parking Controller
+
+Area Service > Area Handler
+Area Service > Area Service File
+Area Service > Area Controller
+
+Ranking Service > Ranking Handler
+Ranking Service > Ranking Service File
+Ranking Service > Ranking Controller
+
+Auth Service > Auth Handler
+Auth Service > Auth Service File
+Auth Service > Auth Controller
+
+// Dependencies - All services use shared code
+Crowd Handler > Error Handler
+Crowd Handler > Redis Client
+Crowd Service File > Crowd History
+Crowd Service File > Database Config
+
+Subway Handler > Error Handler
+Subway Handler > Redis Client
+Subway Service File > Database Config
+
+Parking Handler > Error Handler
+Parking Handler > Redis Client
+Parking Service File > Database Config
+
+Area Handler > Error Handler
+Area Handler > Area Mapping
+Area Service File > Database Config
+
+Ranking Handler > Error Handler
+Ranking Handler > Redis Client
+Ranking Service File > Database Config
+
+Auth Handler > Error Handler
+Auth Handler > JWT Utils
+Auth Handler > Redis Client
+Auth Service File > User Model
+Auth Service File > Database Config
+
