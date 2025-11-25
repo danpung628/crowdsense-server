@@ -1,118 +1,36 @@
 title Lambda Function Internal Structure
 
-// Shared Common Code (Top Level)
-Shared Code [icon: folder, color: blue, size: large, label: "shared/\nCommon Code\n(All Lambda Functions Use This)"]
+// Lambda Layer (공통 라이브러리 - 별도 AWS 리소스)
+Lambda Layer [icon: aws-lambda, color: lightblue, size: large, label: "Lambda Layer\n(별도 AWS 리소스)\n공통 로직 저장"]
 
-// Shared Components
-Utils Folder [icon: folder, color: lightblue, label: "utils/"]
-Area Mapping [icon: file, label: "areaMapping.js"]
-Error Handler [icon: file, label: "errorHandler.js"]
-JWT Utils [icon: file, label: "jwtUtils.js"]
-Redis Client [icon: file, label: "redisClient.js"]
+// Lambda Layer 내부 구조
+Layer Utils [icon: folder, color: lightblue, label: "utils/\nerrorHandler\njwtUtils\nredisClient\nareaMapping"]
+Layer Services [icon: folder, color: lightblue, label: "services/\nauthService\ncrowdService\nsubwayService\nparkingService\nrankingService\nareaService"]
+Layer Models [icon: folder, color: lightblue, label: "models/\nUser\nCrowdHistory"]
+Layer Middlewares [icon: folder, color: lightblue, label: "middlewares/\nauthMiddleware"]
+Layer Data [icon: folder, color: lightblue, label: "data/\nparkingCoordinates"]
+Layer Config [icon: folder, color: lightblue, label: "config/\ndatabase"]
 
-Models Folder [icon: folder, color: lightblue, label: "models/"]
-User Model [icon: file, label: "User.js"]
-Crowd History [icon: file, label: "CrowdHistory.js"]
+// Lambda Functions (6개 서비스 그룹 - 각각 별도 AWS 리소스)
+Auth Service [icon: aws-lambda, color: yellow, label: "Auth Service\nregister, login, logout\nrefresh, me"]
+Crowd Service [icon: aws-lambda, color: yellow, label: "Crowd Service\nlist, detail, history"]
+Subway Service [icon: aws-lambda, color: yellow, label: "Subway Service\nlist, detail"]
+Parking Service [icon: aws-lambda, color: yellow, label: "Parking Service\nlist, nearby, district"]
+Area Service [icon: aws-lambda, color: yellow, label: "Area Service\nlist, categories, search\ncategory, detail"]
+Ranking Service [icon: aws-lambda, color: yellow, label: "Ranking Service\npopular"]
 
-Config Folder [icon: folder, color: lightblue, label: "config/"]
-Database Config [icon: file, label: "database.js"]
+// Lambda Layer 내부 구조
+Lambda Layer > Layer Utils
+Lambda Layer > Layer Services
+Lambda Layer > Layer Models
+Lambda Layer > Layer Middlewares
+Lambda Layer > Layer Data
+Lambda Layer > Layer Config
 
-// Individual Lambda Services
-Crowd Service [icon: folder, color: yellow, label: "crowd-service/"]
-Crowd Handler [icon: file, label: "handler.js"]
-Crowd Service File [icon: file, label: "service.js"]
-Crowd Controller [icon: file, label: "controller.js"]
-
-Subway Service [icon: folder, color: yellow, label: "subway-service/"]
-Subway Handler [icon: file, label: "handler.js"]
-Subway Service File [icon: file, label: "service.js"]
-Subway Controller [icon: file, label: "controller.js"]
-
-Parking Service [icon: folder, color: yellow, label: "parking-service/"]
-Parking Handler [icon: file, label: "handler.js"]
-Parking Service File [icon: file, label: "service.js"]
-Parking Controller [icon: file, label: "controller.js"]
-
-Area Service [icon: folder, color: yellow, label: "area-service/"]
-Area Handler [icon: file, label: "handler.js"]
-Area Service File [icon: file, label: "service.js"]
-Area Controller [icon: file, label: "controller.js"]
-
-Ranking Service [icon: folder, color: yellow, label: "ranking-service/"]
-Ranking Handler [icon: file, label: "handler.js"]
-Ranking Service File [icon: file, label: "service.js"]
-Ranking Controller [icon: file, label: "controller.js"]
-
-Auth Service [icon: folder, color: yellow, label: "auth-service/"]
-Auth Handler [icon: file, label: "handler.js"]
-Auth Service File [icon: file, label: "service.js"]
-Auth Controller [icon: file, label: "controller.js"]
-
-// Hierarchical Structure - Shared Code
-Shared Code > Utils Folder
-Shared Code > Models Folder
-Shared Code > Config Folder
-
-Utils Folder > Area Mapping
-Utils Folder > Error Handler
-Utils Folder > JWT Utils
-Utils Folder > Redis Client
-
-Models Folder > User Model
-Models Folder > Crowd History
-
-Config Folder > Database Config
-
-// Hierarchical Structure - Each Service
-Crowd Service > Crowd Handler
-Crowd Service > Crowd Service File
-Crowd Service > Crowd Controller
-
-Subway Service > Subway Handler
-Subway Service > Subway Service File
-Subway Service > Subway Controller
-
-Parking Service > Parking Handler
-Parking Service > Parking Service File
-Parking Service > Parking Controller
-
-Area Service > Area Handler
-Area Service > Area Service File
-Area Service > Area Controller
-
-Ranking Service > Ranking Handler
-Ranking Service > Ranking Service File
-Ranking Service > Ranking Controller
-
-Auth Service > Auth Handler
-Auth Service > Auth Service File
-Auth Service > Auth Controller
-
-// Dependencies - All services use shared code
-Crowd Handler > Error Handler
-Crowd Handler > Redis Client
-Crowd Service File > Crowd History
-Crowd Service File > Database Config
-
-Subway Handler > Error Handler
-Subway Handler > Redis Client
-Subway Service File > Database Config
-
-Parking Handler > Error Handler
-Parking Handler > Redis Client
-Parking Service File > Database Config
-
-Area Handler > Error Handler
-Area Handler > Area Mapping
-Area Service File > Database Config
-
-Ranking Handler > Error Handler
-Ranking Handler > Redis Client
-Ranking Service File > Database Config
-
-Auth Handler > Error Handler
-Auth Handler > JWT Utils
-Auth Handler > Redis Client
-Auth Service File > User Model
-Auth Service File > Database Config
-
+// Lambda Functions가 Lambda Layer 참조 (모든 서비스가 공통 Layer 사용)
+Auth Service > Lambda Layer [label: "참조", style: dashed, color: orange]
+Crowd Service > Lambda Layer [label: "참조", style: dashed, color: orange]
+Subway Service > Lambda Layer [label: "참조", style: dashed, color: orange]
+Parking Service > Lambda Layer [label: "참조", style: dashed, color: orange]
+Area Service > Lambda Layer [label: "참조", style: dashed, color: orange]
+Ranking Service > Lambda Layer [label: "참조", style: dashed, color: orange]
