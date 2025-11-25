@@ -417,9 +417,26 @@ src/
 layers/
 ├── common/
 │   └── nodejs/
-│       ├── mongodb-client.js
-│       ├── redis-client.js
-│       └── jwt-utils.js
+│       ├── utils/
+│       │   ├── errorHandler.js
+│       │   ├── jwtUtils.js
+│       │   ├── redisClient.js
+│       │   └── areaMapping.js
+│       ├── services/
+│       │   ├── authService.js
+│       │   ├── crowdService.js
+│       │   ├── subwayService.js
+│       │   ├── parkingService.js
+│       │   ├── rankingService.js
+│       │   └── areaService.js
+│       ├── models/
+│       │   ├── User.js
+│       │   └── CrowdHistory.js
+│       ├── middlewares/
+│       │   └── authMiddleware.js
+│       ├── data/
+│       │   └── parkingCoordinates.json
+│       └── config/
 └── external-apis/
     └── nodejs/
         └── seoul-api-client.js
