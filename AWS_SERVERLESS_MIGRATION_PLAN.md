@@ -90,7 +90,7 @@
 - `peopleCount`: Number (default: 0)
 - `congestionLevel`: Number (min: 1, max: 5, default: 3)
 - `rawData`: Mixed (optional)
-- `timestamp`: Date (required, indexed, TTL: 7일)
+- `timestamp`: Date (required, indexed, TTL: 30일)
 
 **인덱스**:
 - `{areaCode: 1, timestamp: -1}`: compound index (지역별 시계열 조회 최적화)

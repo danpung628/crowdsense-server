@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 /**
  * 인구 밀집도 히스토리 스키마
  * - 10분마다 저장
- * - 7일 후 자동 삭제 (TTL 인덱스)
+ * - 30일 후 자동 삭제 (TTL 인덱스)
  */
 const crowdHistorySchema = new mongoose.Schema({
   areaCode: {
@@ -41,8 +41,8 @@ const crowdHistorySchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
     index: true,
-    // TTL 인덱스: 7일 후 자동 삭제
-    expires: 7 * 24 * 60 * 60
+    // TTL 인덱스: 30일 후 자동 삭제
+    expires: 30 * 24 * 60 * 60
   }
 }, {
   timestamps: false // timestamp 필드를 직접 관리하므로 비활성화
