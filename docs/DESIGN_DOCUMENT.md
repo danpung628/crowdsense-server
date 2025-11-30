@@ -31,14 +31,24 @@
 
 ### 마이크로서비스 구조
 
-| 엔드포인트 접두사 | Lambda 서비스 | 주요 기능 |
-|-----------------|--------------|----------|
-| `/api/auth/*` | authService | 회원가입, 로그인/로그아웃, 토큰 갱신 |
-| `/api/crowds/*` | crowdService | 인파 데이터/히스토리 조회 |
-| `/api/subway/*` | subwayService | 지하철 혼잡도 조회 |
-| `/api/parking/*` | ParkingService | 주차장 현황/주변 검색 |
-| `/api/rankings/*` | RankingService | 인기 장소 랭킹 |
-| `/api/areas/*` | AreaService | 지역 정보 조회 |
+**6개 서비스 도메인, 19개 Lambda 함수**
+
+| 엔드포인트 접두사 | Lambda 서비스 | Lambda 함수 개수 | 주요 기능 |
+|-----------------|--------------|----------------|----------|
+| `/api/auth/*` | authService | 5개 | 회원가입, 로그인/로그아웃, 토큰 갱신 |
+| `/api/crowds/*` | crowdService | 3개 | 인파 데이터/히스토리 조회 |
+| `/api/subway/*` | subwayService | 2개 | 지하철 혼잡도 조회 |
+| `/api/parking/*` | ParkingService | 3개 | 주차장 현황/주변 검색 |
+| `/api/rankings/*` | RankingService | 1개 | 인기 장소 랭킹 |
+| `/api/areas/*` | AreaService | 5개 | 지역 정보 조회 |
+
+**Lambda 함수 상세:**
+- **AuthService**: register, login, logout, refresh, me (5개)
+- **CrowdService**: list, detail, history (3개)
+- **SubwayService**: list, detail (2개)
+- **ParkingService**: list, nearby, district (3개)
+- **RankingService**: popular (1개)
+- **AreaService**: list, categories, search, category, detail (5개)
 
 ---
 
@@ -69,6 +79,10 @@
 - IAM: 접근 제어 및 권한 관리
 - CloudWatch: 로깅 및 모니터링
 
+### 개발 도구
+- **버전 관리**: Git
+- **로컬 개발**: AWS SAM (Serverless Application Model)
+
 ---
 
 ## 💾 데이터베이스 설계
@@ -76,6 +90,7 @@
 ### MongoDB Atlas 스키마
 
 #### User 컬렉션
+- `_id`: ObjectId (MongoDB 자동 생성)
 - `id`: String (unique, required, indexed)
 - `password`: String (hashed, required)
 - `accessToken`: String
@@ -84,6 +99,7 @@
 - `updatedAt`: Date
 
 #### CrowdHistory 컬렉션
+- `_id`: ObjectId (MongoDB 자동 생성)
 - `areaCode`: String (required, indexed)
 - `areaName`: String (required)
 - `category`: String (required)
@@ -92,9 +108,11 @@
 - `rawData`: Mixed (optional)
 - `timestamp`: Date (required, indexed, TTL: 30일)
 
-**인덱스**:
-- `{areaCode: 1, timestamp: -1}`: compound index (지역별 시계열 조회 최적화)
-- `{category: 1, peopleCount: -1, timestamp: -1}`: compound index (카테고리별 랭킹 조회 최적화)
+**인덱스 전략**:
+1. `areaCode`: 단일 인덱스 (지역별 조회 최적화)
+2. `timestamp`: TTL 인덱스 (30일 후 자동 삭제)
+3. `{areaCode: 1, timestamp: -1}`: 복합 인덱스 (지역별 시계열 조회 최적화)
+4. `{category: 1, peopleCount: -1, timestamp: -1}`: 복합 인덱스 (카테고리별 랭킹 조회 최적화)
 
 ### Redis 캐시 구조 (Amazon ElastiCache)
 
@@ -119,10 +137,59 @@
 #### 주차장 데이터 캐시
 - **Key**: `parking:{district}`
 - **TTL**: 600초 (10분)
+- **Value 구조**:
+```json
+[{
+  "parkingId": "String",
+  "code": "String",
+  "name": "String",
+  "district": "String",
+  "address": "String",
+  "type": "String",
+  "operationType": "String",
+  "tel": "String | null",
+  "total": "Number",
+  "current": "Number",
+  "available": "Number",
+  "isAvailable": "boolean",
+  "isPaidParking": "boolean",
+  "rates": {
+    "basic": {"fee": "Number", "time": "Number"},
+    "additional": {"fee": "Number", "time": "Number"},
+    "dayMax": "Number"
+  },
+  "operatingHours": {
+    "weekday": "String",
+    "weekend": "String",
+    "holiday": "String"
+  },
+  "nightFree": "boolean",
+  "coordinates": {
+    "latitude": "Number | null",
+    "longitude": "Number | null"
+  },
+  "lastUpdated": "String",
+  "updatedAt": "String"
+}]
+```
 
 #### 지하철 혼잡도 캐시
 - **Key**: `subway:{areaCode}`
 - **TTL**: 600초 (10분)
+- **Value 구조**:
+```json
+{
+  "areaCode": "String",
+  "areaInfo": {
+    "category": "String",
+    "areaCode": "String",
+    "areaName": "String",
+    "engName": "String"
+  },
+  "subway": "Object (서울시 API 원본 응답)",
+  "fetchedAt": "String (ISO date-time)"
+}
+```
 
 ---
 
@@ -211,9 +278,11 @@
 
 ## 📁 Lambda 함수 구조
 
+**총 19개 Lambda 함수 (6개 서비스 도메인)**
+
 ```
 lambda-functions/
-├── shared/                    # 공통 레이어
+├── shared/                    # 공통 레이어 (Lambda Layer)
 │   ├── utils/
 │   │   ├── errorHandler.js
 │   │   ├── jwtUtils.js
@@ -335,6 +404,20 @@ exports.handler = async (event) => {
 └── /popular (PopularPlaces)
 ```
 
+### 모바일/PC 최적화
+
+**모바일 최적화:**
+- 터치 친화적 UI 디자인
+- 하단 네비게이션 바
+- 스와이프 제스처 지원
+- PWA 설치 가능
+
+**PC 최적화:**
+- 사이드바 네비게이션
+- 키보드 단축키 지원
+- 마우스 호버 효과
+- 넓은 화면 활용
+
 ### 컴포넌트 구조
 ```
 src/
@@ -347,6 +430,19 @@ src/
 ├── contexts/       # Context API
 └── App.tsx         # 메인 앱 컴포넌트
 ```
+
+### 레이어 구조
+
+**프론트엔드 레이어 구조:**
+- **Presentation Layer**: Pages, Components (UI 컴포넌트)
+- **Business Logic Layer**: Contexts, Hooks (상태 관리 및 비즈니스 로직)
+- **Data Access Layer**: API Services, Client (API 통신)
+
+**백엔드 레이어 구조:**
+- **Route Layer**: API Routes (엔드포인트 정의)
+- **Controller Layer**: Request/Response Handling (요청/응답 처리)
+- **Service Layer**: Business Logic (비즈니스 로직)
+- **Data Access Layer**: Models, External APIs (데이터 접근)
 
 ---
 
