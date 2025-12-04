@@ -45,7 +45,10 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
 
   // API 요청은 동적 캐시 전략 사용
-  if (url.origin.includes('localhost:3000') || url.pathname.startsWith('/api/')) {
+  // API Gateway URL도 포함하도록 수정
+  if (url.origin.includes('localhost:3000') || 
+      url.origin.includes('amazonaws.com') ||
+      url.pathname.startsWith('/api/')) {
     event.respondWith(networkFirstStrategy(request));
   } else {
     // 정적 파일은 캐시 우선

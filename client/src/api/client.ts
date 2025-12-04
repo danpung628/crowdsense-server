@@ -1,8 +1,23 @@
 import axios from 'axios';
 
+// 환경 변수에서 API Base URL 가져오기
+// Vite는 import.meta.env를 사용하여 환경 변수에 접근
+// VITE_ 접두사가 붙은 변수만 클라이언트에서 접근 가능
+const getApiBaseUrl = (): string => {
+  // 환경 변수가 설정되어 있으면 사용, 없으면 기본값 (개발 환경)
+  const baseUrl = import.meta.env.VITE_API_BASE_URL;
+  
+  if (baseUrl) {
+    return baseUrl;
+  }
+  
+  // 기본값: 개발 환경 (로컬 Express 서버)
+  return 'http://localhost:3000/api';
+};
+
 // API 클라이언트 설정
 export const apiClient = axios.create({
-  baseURL: 'http://localhost:3000/api',
+  baseURL: getApiBaseUrl(),
   timeout: 15000, // 15초로 감소 (너무 오래 기다리지 않도록)
   headers: {
     'Content-Type': 'application/json',
@@ -11,7 +26,7 @@ export const apiClient = axios.create({
 
 // 빠른 응답이 필요한 API용 클라이언트
 export const fastApiClient = axios.create({
-  baseURL: 'http://localhost:3000/api',
+  baseURL: getApiBaseUrl(),
   timeout: 8000, // 8초
   headers: {
     'Content-Type': 'application/json',
@@ -36,18 +51,52 @@ const responseSuccessHandler = (response: any) => {
   return response;
 };
 
+// 재시도 로직을 위한 헬퍼 함수
+const retryRequest = async (config: any, retries = 3, delay = 1000): Promise<any> => {
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await axios(config);
+    } catch (error: any) {
+      // 마지막 시도이거나 재시도하면 안 되는 에러인 경우
+      if (i === retries - 1 || (error.response && error.response.status >= 400 && error.response.status < 500)) {
+        throw error;
+      }
+      // 지수 백오프: 1초, 2초, 4초...
+      await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, i)));
+    }
+  }
+  throw new Error('재시도 실패');
+};
+
+// 재시도 가능한 API 호출 래퍼
+export const apiClientWithRetry = {
+  get: (url: string, config?: any) => retryRequest({ ...config, method: 'GET', url }),
+  post: (url: string, data?: any, config?: any) => retryRequest({ ...config, method: 'POST', url, data }),
+  put: (url: string, data?: any, config?: any) => retryRequest({ ...config, method: 'PUT', url, data }),
+  delete: (url: string, config?: any) => retryRequest({ ...config, method: 'DELETE', url }),
+};
+
 const responseErrorHandler = (error: any) => {
   if (error.code === 'ECONNABORTED') {
     console.error('⏱️ 타임아웃 오류:', error.config?.url);
     error.message = '서버 응답 시간이 초과되었습니다. 잠시 후 다시 시도해주세요.';
   } else if (error.response) {
     // 서버가 응답했지만 에러 상태
-    console.error('❌ 서버 오류:', error.response.status, error.response.data);
-    error.message = `서버 오류 (${error.response.status}): ${error.response.data?.message || '알 수 없는 오류'}`;
+    const status = error.response.status;
+    console.error('❌ 서버 오류:', status, error.response.data);
+    
+    // 5xx 에러는 재시도 가능
+    if (status >= 500) {
+      error.retryable = true;
+      error.message = `서버 오류 (${status}): 일시적인 문제입니다. 잠시 후 다시 시도해주세요.`;
+    } else {
+      error.message = `서버 오류 (${status}): ${error.response.data?.message || '알 수 없는 오류'}`;
+    }
   } else if (error.request) {
-    // 요청은 보냈지만 응답 없음
+    // 요청은 보냈지만 응답 없음 (네트워크 오류)
     console.error('❌ 네트워크 오류:', error.message);
-    error.message = '서버에 연결할 수 없습니다. 백엔드 서버가 실행 중인지 확인해주세요.';
+    error.retryable = true;
+    error.message = '서버에 연결할 수 없습니다. 네트워크 연결을 확인해주세요.';
   } else {
     console.error('❌ 알 수 없는 오류:', error.message);
   }
