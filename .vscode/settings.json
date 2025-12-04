@@ -1,0 +1,13 @@
+{
+  "git.autoRepositoryDetection": false,
+  "git.scanRepositories": [
+    "."
+  ],
+  "git.detectSubmodules": false,
+  "git.ignoreSubmodules": true,
+  "files.exclude": {
+    "**/client/.git": true,
+    "**/client/.git/**": true
+  }
+}
+
