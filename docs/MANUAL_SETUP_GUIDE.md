@@ -262,12 +262,12 @@ REDIS_URL=redis://crowdsense-redis.xxxxxx.apn2.cache.amazonaws.com:6379
 1. Clusters → Connect → Connect your application
 2. 연결 문자열 복사:
 ```
-mongodb+srv://username:password@cluster0.xxxxx.mongodb.net/crowdsense?retryWrites=true&w=majority
+mongodb+srv://<YOUR_USERNAME>:<YOUR_PASSWORD>@<YOUR_CLUSTER>.mongodb.net/crowdsense?retryWrites=true&w=majority
 ```
 
 ### Lambda 환경 변수
 ```
-MONGODB_URI=mongodb+srv://username:password@cluster0.xxxxx.mongodb.net/crowdsense?retryWrites=true&w=majority
+MONGODB_URI=mongodb+srv://<YOUR_USERNAME>:<YOUR_PASSWORD>@<YOUR_CLUSTER>.mongodb.net/crowdsense?retryWrites=true&w=majority
 ```
 
 ### 컬렉션 구조
