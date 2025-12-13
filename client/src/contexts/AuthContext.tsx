@@ -97,23 +97,60 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
     } catch (error: any) {
       console.error('❌ Login error:', error);
-      // axios 에러인 경우 response.data에서 메시지 추출
-      if (error.response?.data) {
-        const responseData = error.response.data;
-        let errorMessage = '로그인에 실패했습니다.';
-        if (responseData.error) {
+      
+      // 원본 응답 데이터에서 메시지 추출 (apiClient가 덮어쓰기 전 원본 사용)
+      const responseData = error.response?.data || error.originalResponseData;
+      let errorMessage = error.message || '로그인에 실패했습니다.';
+      
+      console.log('🔍 Error responseData:', JSON.stringify(responseData, null, 2));
+      console.log('🔍 Error message:', error.message);
+      
+      // responseData에서 메시지 추출 (우선순위: error.message > error > message)
+      if (responseData) {
+        if (typeof responseData === 'string') {
+          errorMessage = responseData;
+        } else if (responseData.error) {
           if (typeof responseData.error === 'string') {
             errorMessage = responseData.error;
           } else if (responseData.error.message) {
+            // Lambda 응답 구조: {success: false, error: {code, message}}
             errorMessage = responseData.error.message;
           }
         } else if (responseData.message) {
           errorMessage = responseData.message;
         }
-        throw new Error(errorMessage);
       }
-      // 이미 Error 객체인 경우 그대로 전달
-      throw error;
+      
+      // error.message가 "알 수 없는 오류"인 경우 responseData에서 다시 추출 시도
+      if (errorMessage === '알 수 없는 오류' && responseData) {
+        // 모든 가능한 경로에서 메시지 추출 시도
+        const possibleMessages = [
+          responseData.error?.message,
+          typeof responseData.error === 'string' ? responseData.error : null,
+          responseData.message,
+          typeof responseData === 'string' ? responseData : null
+        ].filter(Boolean);
+        
+        if (possibleMessages.length > 0) {
+          errorMessage = possibleMessages[0] as string;
+        }
+      }
+      
+      // 에러 메시지 파싱하여 사용자 친화적인 메시지로 변환
+      if (errorMessage.includes('존재하지 않는 사용자') || errorMessage.includes('존재하지 않는 사용자 ID')) {
+        errorMessage = '없는 회원입니다.';
+      } else if (errorMessage.includes('비밀번호가 일치하지 않습니다')) {
+        errorMessage = '비밀번호가 일치하지 않습니다.';
+      } else if (errorMessage.includes('로그인 실패')) {
+        // "로그인 실패: 존재하지 않는 사용자 ID입니다." 같은 경우 처리
+        if (errorMessage.includes('존재하지 않는 사용자')) {
+          errorMessage = '없는 회원입니다.';
+        } else if (errorMessage.includes('비밀번호')) {
+          errorMessage = '비밀번호가 일치하지 않습니다.';
+        }
+      }
+      
+      throw new Error(errorMessage);
     }
   };
 
@@ -141,23 +178,56 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
     } catch (error: any) {
       console.error('❌ Register error:', error);
-      // axios 에러인 경우 response.data에서 메시지 추출
-      if (error.response?.data) {
-        const responseData = error.response.data;
-        let errorMessage = '회원가입에 실패했습니다.';
-        if (responseData.error) {
+      
+      // 원본 응답 데이터에서 메시지 추출 (apiClient가 덮어쓰기 전 원본 사용)
+      const responseData = error.response?.data || error.originalResponseData;
+      let errorMessage = error.message || '회원가입에 실패했습니다.';
+      
+      console.log('🔍 Register Error responseData:', JSON.stringify(responseData, null, 2));
+      console.log('🔍 Register Error message:', error.message);
+      
+      // responseData에서 메시지 추출 (우선순위: error.message > error > message)
+      if (responseData) {
+        if (typeof responseData === 'string') {
+          errorMessage = responseData;
+        } else if (responseData.error) {
           if (typeof responseData.error === 'string') {
             errorMessage = responseData.error;
           } else if (responseData.error.message) {
+            // Lambda 응답 구조: {success: false, error: {code, message}}
             errorMessage = responseData.error.message;
           }
         } else if (responseData.message) {
           errorMessage = responseData.message;
         }
-        throw new Error(errorMessage);
       }
-      // 이미 Error 객체인 경우 그대로 전달
-      throw error;
+      
+      // error.message가 "알 수 없는 오류"인 경우 responseData에서 다시 추출 시도
+      if (errorMessage === '알 수 없는 오류' && responseData) {
+        // 모든 가능한 경로에서 메시지 추출 시도
+        const possibleMessages = [
+          responseData.error?.message,
+          typeof responseData.error === 'string' ? responseData.error : null,
+          responseData.message,
+          typeof responseData === 'string' ? responseData : null
+        ].filter(Boolean);
+        
+        if (possibleMessages.length > 0) {
+          errorMessage = possibleMessages[0] as string;
+        }
+      }
+      
+      // 에러 메시지 파싱하여 사용자 친화적인 메시지로 변환
+      if (errorMessage.includes('이미 존재하는 사용자') || errorMessage.includes('이미 존재하는 사용자 ID')) {
+        errorMessage = '이미 존재하는 아이디입니다.';
+      } else if (errorMessage.includes('회원가입 실패')) {
+        // "회원가입 실패: 이미 존재하는 사용자 ID입니다." 같은 경우 처리
+        if (errorMessage.includes('이미 존재하는 사용자')) {
+          errorMessage = '이미 존재하는 아이디입니다.';
+        }
+      }
+      
+      throw new Error(errorMessage);
     }
   };
 

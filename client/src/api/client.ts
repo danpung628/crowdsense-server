@@ -92,6 +92,7 @@ const responseErrorHandler = (error: any) => {
     console.error('❌ 서버 오류:', status, responseData);
     
     // 에러 메시지 추출 (여러 형태 지원)
+    // Lambda 응답 구조: {success: false, error: {code, message}}
     let errorMessage = '알 수 없는 오류';
     if (responseData) {
       if (typeof responseData === 'string') {
@@ -100,6 +101,7 @@ const responseErrorHandler = (error: any) => {
         if (typeof responseData.error === 'string') {
           errorMessage = responseData.error;
         } else if (responseData.error.message) {
+          // Lambda 응답 구조: error.error.message
           errorMessage = responseData.error.message;
         }
       } else if (responseData.message) {
@@ -112,6 +114,10 @@ const responseErrorHandler = (error: any) => {
       error.retryable = true;
       error.message = `서버 오류 (${status}): 일시적인 문제입니다. 잠시 후 다시 시도해주세요.`;
     } else {
+      // 4xx 에러 (클라이언트 오류)는 원본 메시지 사용
+      // 원본 responseData를 보존하여 AuthContext에서 사용할 수 있도록
+      error.originalResponseData = responseData;
+      // 항상 메시지 설정 (AuthContext에서 파싱할 수 있도록)
       error.message = errorMessage;
     }
   } else if (error.request) {
