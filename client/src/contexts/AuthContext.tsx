@@ -53,15 +53,28 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const login = async (id: string, password: string) => {
     const response = await authApi.login({ id, password });
-    if (response.success && response.data) {
-      localStorage.setItem('accessToken', response.data.accessToken);
-      localStorage.setItem('refreshToken', response.data.refreshToken);
-      if (response.data.user) {
-        setUser(response.data.user);
+    // 응답 구조: {success: true, accessToken: '...', refreshToken: '...', userId: '...'}
+    // 또는 {success: true, data: {accessToken: '...', refreshToken: '...', user: {...}}}
+    if (response.success) {
+      const accessToken = (response as any).accessToken || response.data?.accessToken;
+      const refreshToken = (response as any).refreshToken || response.data?.refreshToken;
+      
+      if (accessToken && refreshToken) {
+        localStorage.setItem('accessToken', accessToken);
+        localStorage.setItem('refreshToken', refreshToken);
+        
+        // 사용자 정보 설정
+        if ((response as any).userId) {
+          setUser({ id: (response as any).userId });
+        } else if (response.data?.user) {
+          setUser(response.data.user);
+        } else {
+          // 사용자 정보 가져오기
+          const userInfo = await authApi.getMe();
+          setUser(userInfo);
+        }
       } else {
-        // 사용자 정보 가져오기
-        const userInfo = await authApi.getMe();
-        setUser(userInfo);
+        throw new Error('토큰을 받지 못했습니다.');
       }
     } else {
       throw new Error(response.error?.message || '로그인에 실패했습니다.');
@@ -72,7 +85,27 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     const response = await authApi.register({ id, password });
     if (response.success) {
       // 회원가입 후 자동 로그인
-      await login(id, password);
+      // register 응답에도 토큰이 있을 수 있으므로 확인
+      const accessToken = (response as any).accessToken || response.data?.accessToken;
+      const refreshToken = (response as any).refreshToken || response.data?.refreshToken;
+      
+      if (accessToken && refreshToken) {
+        // 토큰이 있으면 직접 설정하고 사용자 정보 가져오기
+        localStorage.setItem('accessToken', accessToken);
+        localStorage.setItem('refreshToken', refreshToken);
+        
+        if ((response as any).userId) {
+          setUser({ id: (response as any).userId });
+        } else if (response.data?.user) {
+          setUser(response.data.user);
+        } else {
+          const userInfo = await authApi.getMe();
+          setUser(userInfo);
+        }
+      } else {
+        // 토큰이 없으면 login 호출
+        await login(id, password);
+      }
     } else {
       throw new Error(response.error?.message || '회원가입에 실패했습니다.');
     }
