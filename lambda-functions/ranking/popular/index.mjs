@@ -1,4 +1,4 @@
-// ranking-popular Lambda 함수
+﻿// ranking-popular Lambda 함수
 // 인기 장소 랭킹 조회
 
 const rankings = [

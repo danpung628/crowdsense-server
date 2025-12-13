@@ -1,4 +1,4 @@
-// area-categories Lambda 함수
+﻿// area-categories Lambda 함수
 // 카테고리 목록 조회
 
 const categories = [

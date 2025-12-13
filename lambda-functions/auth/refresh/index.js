@@ -1,4 +1,4 @@
-const authService = require('/opt/nodejs/shared/services/authService.js');
+﻿const authService = require('/opt/nodejs/shared/services/authService.js');
 const { handleLambdaError } = require('/opt/nodejs/shared/utils/errorHandler.js');
 
 exports.handler = async (event) => {

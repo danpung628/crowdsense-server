@@ -1,4 +1,4 @@
-// area-category Lambda 함수
+﻿// area-category Lambda 함수
 // 카테고리별 지역 조회
 
 const areas = [

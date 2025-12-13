@@ -1,4 +1,4 @@
-// area-list Lambda 함수
+﻿// area-list Lambda 함수
 // 전체 지역 목록 조회
 
 // 지역 데이터 (areacode.csv 내용)

@@ -1,4 +1,4 @@
-const authService = require('/opt/nodejs/shared/services/authService.js');
+﻿const authService = require('/opt/nodejs/shared/services/authService.js');
 const { handleLambdaError } = require('/opt/nodejs/shared/utils/errorHandler.js');
 const { verifyAccessToken } = require('/opt/nodejs/shared/utils/jwtUtils.js');
 //const { handleLambdaError } = require('opt/nodejs/shared/utils/errorHandler.js');

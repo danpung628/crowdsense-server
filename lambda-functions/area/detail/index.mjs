@@ -1,4 +1,4 @@
-// area-detail Lambda 함수
+﻿// area-detail Lambda 함수
 // 특정 지역 상세 정보 조회
 
 const areas = [

@@ -1,4 +1,4 @@
-// // Lambda Layer 경로 우선 시도, 없으면 상대 경로 사용
+﻿// // Lambda Layer 경로 우선 시도, 없으면 상대 경로 사용
 // let authService, handleLambdaError;
 // try {
 //   // Lambda Layer 경로 (/opt/nodejs/)

@@ -1,4 +1,4 @@
-// area-search Lambda 함수
+﻿// area-search Lambda 함수
 // 지역명으로 검색
 
 const areas = [
