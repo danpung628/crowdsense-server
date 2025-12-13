@@ -1,5 +1,5 @@
 import { apiClient } from './client';
-import type { AreaInfo, CrowdData, SubwayStation, ParkingLot, RankingItem, CrowdHistoryResponse } from './types';
+import type { AreaInfo, CrowdData, SubwayStation, ParkingLot, RankingItem, CrowdHistoryResponse, LoginRequest, RegisterRequest, AuthResponse, UserInfo } from './types';
 
 // 인파 API
 export const crowdApi = {
@@ -355,5 +355,48 @@ export const rankingApi = {
       // 에러 발생 시 기존 목 데이터 사용
       return rankingApi.getTopPlaces(limit);
     }
+  },
+};
+
+// Auth API
+export const authApi = {
+  // 회원가입
+  register: async (data: RegisterRequest): Promise<AuthResponse> => {
+    const response = await apiClient.post('/auth-register', data);
+    return response.data;
+  },
+
+  // 로그인
+  login: async (data: LoginRequest): Promise<AuthResponse> => {
+    const response = await apiClient.post('/auth-login', data);
+    return response.data;
+  },
+
+  // 로그아웃
+  logout: async (): Promise<AuthResponse> => {
+    const token = localStorage.getItem('accessToken');
+    const response = await apiClient.post('/auth-logout', {}, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  },
+
+  // 토큰 갱신
+  refresh: async (refreshToken: string): Promise<AuthResponse> => {
+    const response = await apiClient.post('/auth-refresh', { refreshToken });
+    return response.data;
+  },
+
+  // 내 정보 조회
+  getMe: async (): Promise<UserInfo> => {
+    const token = localStorage.getItem('accessToken');
+    const response = await apiClient.get('/auth-me', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data.data || response.data;
   },
 };

@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
+import { AuthProvider } from "./contexts/AuthContext";
 
 import { lazy, Suspense } from "react";
 
@@ -11,6 +12,8 @@ const Transit = lazy(() => import("./pages/Transit"));
 const Parking = lazy(() => import("./pages/Parking"));
 const PopularPlaces = lazy(() => import("./pages/PopularPlaces"));
 const HistoryView = lazy(() => import("./pages/HistoryView"));
+const Login = lazy(() => import("./pages/Login"));
+const Register = lazy(() => import("./pages/Register"));
 
 // 로딩 컴포넌트
 const LoadingFallback = () => (
@@ -24,22 +27,26 @@ const LoadingFallback = () => (
 
 function App() {
   return (
-    <BrowserRouter>
-      <Navbar />
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
-        <Suspense fallback={<LoadingFallback />}>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/crowd" element={<CrowdMap />} />
-            <Route path="/crowd/:areaCode" element={<CrowdDetail />} />
-            <Route path="/transit" element={<Transit />} />
-            <Route path="/parking" element={<Parking />} />
-            <Route path="/popular" element={<PopularPlaces />} />
-            <Route path="/history/:areaCode" element={<HistoryView />} />
-          </Routes>
-        </Suspense>
-      </main>
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <Navbar />
+        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+          <Suspense fallback={<LoadingFallback />}>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/crowd" element={<CrowdMap />} />
+              <Route path="/crowd/:areaCode" element={<CrowdDetail />} />
+              <Route path="/transit" element={<Transit />} />
+              <Route path="/parking" element={<Parking />} />
+              <Route path="/popular" element={<PopularPlaces />} />
+              <Route path="/history/:areaCode" element={<HistoryView />} />
+            </Routes>
+          </Suspense>
+        </main>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 

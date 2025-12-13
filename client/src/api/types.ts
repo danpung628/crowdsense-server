@@ -70,3 +70,36 @@ export interface CrowdHistoryResponse {
     congestionLevel: number;
   };
 }
+
+// Auth API 타입
+export interface LoginRequest {
+  id: string;
+  password: string;
+}
+
+export interface RegisterRequest {
+  id: string;
+  password: string;
+}
+
+export interface AuthResponse {
+  success: boolean;
+  data?: {
+    accessToken: string;
+    refreshToken: string;
+    user?: {
+      id: string;
+    };
+  };
+  message?: string;
+  error?: {
+    code: string;
+    message: string;
+  };
+}
+
+export interface UserInfo {
+  id: string;
+  createdAt?: string;
+  updatedAt?: string;
+}

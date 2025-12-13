@@ -36,6 +36,11 @@ export const fastApiClient = axios.create({
 // 요청 인터셉터
 apiClient.interceptors.request.use(
   (config) => {
+    // 토큰이 있으면 자동으로 헤더에 추가
+    const token = localStorage.getItem('accessToken');
+    if (token && !config.headers.Authorization) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     console.log(`🚀 API 요청: ${config.method?.toUpperCase()} ${config.url}`);
     return config;
   },
