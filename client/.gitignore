@@ -31,3 +31,8 @@ dist-ssr
 
 # Build outputs
 *.tsbuildinfo
+
+# Playwright
+/test-results/
+/playwright-report/
+/playwright/.cache/
