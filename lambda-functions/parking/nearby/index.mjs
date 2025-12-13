@@ -1,5 +1,5 @@
 ﻿// lambda-functions/parking/nearby/index.js
-const crowdService = require('/opt/nodejs/shared/services/crowdService.js');
+const parkingService = require('/opt/nodejs/shared/services/parkingService.js');
 function createResponse(statusCode, body) {
   return {
     statusCode,

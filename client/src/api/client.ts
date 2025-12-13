@@ -88,14 +88,31 @@ const responseErrorHandler = (error: any) => {
   } else if (error.response) {
     // 서버가 응답했지만 에러 상태
     const status = error.response.status;
-    console.error('❌ 서버 오류:', status, error.response.data);
+    const responseData = error.response.data;
+    console.error('❌ 서버 오류:', status, responseData);
+    
+    // 에러 메시지 추출 (여러 형태 지원)
+    let errorMessage = '알 수 없는 오류';
+    if (responseData) {
+      if (typeof responseData === 'string') {
+        errorMessage = responseData;
+      } else if (responseData.error) {
+        if (typeof responseData.error === 'string') {
+          errorMessage = responseData.error;
+        } else if (responseData.error.message) {
+          errorMessage = responseData.error.message;
+        }
+      } else if (responseData.message) {
+        errorMessage = responseData.message;
+      }
+    }
     
     // 5xx 에러는 재시도 가능
     if (status >= 500) {
       error.retryable = true;
       error.message = `서버 오류 (${status}): 일시적인 문제입니다. 잠시 후 다시 시도해주세요.`;
     } else {
-      error.message = `서버 오류 (${status}): ${error.response.data?.message || '알 수 없는 오류'}`;
+      error.message = errorMessage;
     }
   } else if (error.request) {
     // 요청은 보냈지만 응답 없음 (네트워크 오류)

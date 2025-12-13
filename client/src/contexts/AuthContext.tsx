@@ -52,62 +52,112 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   }, []);
 
   const login = async (id: string, password: string) => {
-    const response = await authApi.login({ id, password });
-    // 응답 구조: {success: true, accessToken: '...', refreshToken: '...', userId: '...'}
-    // 또는 {success: true, data: {accessToken: '...', refreshToken: '...', user: {...}}}
-    if (response.success) {
-      const accessToken = (response as any).accessToken || response.data?.accessToken;
-      const refreshToken = (response as any).refreshToken || response.data?.refreshToken;
+    try {
+      const response = await authApi.login({ id, password });
+      console.log('🔍 Login response:', response);
       
-      if (accessToken && refreshToken) {
-        localStorage.setItem('accessToken', accessToken);
-        localStorage.setItem('refreshToken', refreshToken);
+      // 응답 구조: {success: true, accessToken: '...', refreshToken: '...', userId: '...'}
+      // 또는 {success: true, data: {accessToken: '...', refreshToken: '...', user: {...}}}
+      if (response.success) {
+        const accessToken = (response as any).accessToken || response.data?.accessToken;
+        const refreshToken = (response as any).refreshToken || response.data?.refreshToken;
         
-        // 사용자 정보 설정
-        if ((response as any).userId) {
-          setUser({ id: (response as any).userId });
-        } else if (response.data?.user) {
-          setUser(response.data.user);
+        console.log('🔍 Tokens:', { accessToken: !!accessToken, refreshToken: !!refreshToken });
+        
+        if (accessToken && refreshToken) {
+          localStorage.setItem('accessToken', accessToken);
+          localStorage.setItem('refreshToken', refreshToken);
+          
+          // 사용자 정보 설정
+          if ((response as any).userId) {
+            setUser({ id: (response as any).userId });
+          } else if (response.data?.user) {
+            setUser(response.data.user);
+          } else {
+            // 사용자 정보 가져오기 시도 (실패해도 계속 진행)
+            try {
+              const userInfo = await authApi.getMe();
+              setUser(userInfo);
+            } catch (meError) {
+              console.warn('⚠️ getMe 실패, userId로 설정:', meError);
+              // userId가 있으면 사용, 없으면 빈 객체라도 설정
+              if ((response as any).userId) {
+                setUser({ id: (response as any).userId });
+              }
+            }
+          }
         } else {
-          // 사용자 정보 가져오기
-          const userInfo = await authApi.getMe();
-          setUser(userInfo);
+          console.error('❌ 토큰이 없습니다:', response);
+          throw new Error('토큰을 받지 못했습니다.');
         }
       } else {
-        throw new Error('토큰을 받지 못했습니다.');
+        const errorMsg = (response as any).error?.message || response.error?.message || '로그인에 실패했습니다.';
+        console.error('❌ Login failed:', errorMsg);
+        throw new Error(errorMsg);
       }
-    } else {
-      throw new Error(response.error?.message || '로그인에 실패했습니다.');
+    } catch (error: any) {
+      console.error('❌ Login error:', error);
+      // axios 에러인 경우 response.data에서 메시지 추출
+      if (error.response?.data) {
+        const responseData = error.response.data;
+        let errorMessage = '로그인에 실패했습니다.';
+        if (responseData.error) {
+          if (typeof responseData.error === 'string') {
+            errorMessage = responseData.error;
+          } else if (responseData.error.message) {
+            errorMessage = responseData.error.message;
+          }
+        } else if (responseData.message) {
+          errorMessage = responseData.message;
+        }
+        throw new Error(errorMessage);
+      }
+      // 이미 Error 객체인 경우 그대로 전달
+      throw error;
     }
   };
 
   const register = async (id: string, password: string) => {
-    const response = await authApi.register({ id, password });
-    if (response.success) {
-      // 회원가입 후 자동 로그인
-      // register 응답에도 토큰이 있을 수 있으므로 확인
-      const accessToken = (response as any).accessToken || response.data?.accessToken;
-      const refreshToken = (response as any).refreshToken || response.data?.refreshToken;
+    try {
+      const response = await authApi.register({ id, password });
+      console.log('🔍 Register response:', response);
       
-      if (accessToken && refreshToken) {
-        // 토큰이 있으면 직접 설정하고 사용자 정보 가져오기
-        localStorage.setItem('accessToken', accessToken);
-        localStorage.setItem('refreshToken', refreshToken);
-        
-        if ((response as any).userId) {
-          setUser({ id: (response as any).userId });
-        } else if (response.data?.user) {
-          setUser(response.data.user);
-        } else {
-          const userInfo = await authApi.getMe();
-          setUser(userInfo);
+      if (response.success) {
+        // 회원가입 후 자동 로그인
+        // register 응답에는 보통 토큰이 없으므로 login 호출
+        try {
+          await login(id, password);
+        } catch (loginError) {
+          console.error('❌ Register 후 login 실패:', loginError);
+          // login 실패 시에도 회원가입은 성공했으므로 에러를 던지지 않음
+          // 대신 회원가입 성공 메시지와 함께 로그인 페이지로 안내하는 것이 좋지만,
+          // 현재 구조상 에러를 던져야 Register.tsx에서 처리할 수 있음
+          throw new Error(loginError instanceof Error ? loginError.message : '회원가입은 완료되었지만 자동 로그인에 실패했습니다. 로그인 페이지에서 다시 시도해주세요.');
         }
       } else {
-        // 토큰이 없으면 login 호출
-        await login(id, password);
+        const errorMsg = (response as any).error?.message || response.error?.message || '회원가입에 실패했습니다.';
+        console.error('❌ Register failed:', errorMsg);
+        throw new Error(errorMsg);
       }
-    } else {
-      throw new Error(response.error?.message || '회원가입에 실패했습니다.');
+    } catch (error: any) {
+      console.error('❌ Register error:', error);
+      // axios 에러인 경우 response.data에서 메시지 추출
+      if (error.response?.data) {
+        const responseData = error.response.data;
+        let errorMessage = '회원가입에 실패했습니다.';
+        if (responseData.error) {
+          if (typeof responseData.error === 'string') {
+            errorMessage = responseData.error;
+          } else if (responseData.error.message) {
+            errorMessage = responseData.error.message;
+          }
+        } else if (responseData.message) {
+          errorMessage = responseData.message;
+        }
+        throw new Error(errorMessage);
+      }
+      // 이미 Error 객체인 경우 그대로 전달
+      throw error;
     }
   };
 

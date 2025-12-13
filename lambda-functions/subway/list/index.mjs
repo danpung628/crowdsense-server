@@ -1,5 +1,5 @@
 ﻿// lambda-functions/subway/list/index.js
-const crowdService = require('/opt/nodejs/shared/services/crowdService.js');
+const subwayService = require('/opt/nodejs/shared/services/subwayService.js');
 function createResponse(statusCode, body) {
   return {
     statusCode,

@@ -1,5 +1,5 @@
 ﻿// lambda-functions/parking/district/index.js
-const crowdService = require('/opt/nodejs/shared/services/crowdService.js');
+const parkingService = require('/opt/nodejs/shared/services/parkingService.js');
 function createResponse(statusCode, body) {
   return {
     statusCode,
@@ -39,7 +39,8 @@ exports.handler = async (event, context) => {
     }
 
     // Path 파라미터에서 district 추출
-    const district = event.pathParameters?.district;
+    let district = event.pathParameters?.district;
+    district = decodeURIComponent(district);
 
     if (!district) {
       return createResponse(400, errorResponse(new Error('자치구 이름이 필요합니다.')));
