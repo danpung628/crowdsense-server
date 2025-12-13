@@ -147,6 +147,12 @@ npm run build
 
 ## 🔍 배포 확인
 
+### S3 웹사이트 엔드포인트 (현재 사용 가능)
+- **URL**: `http://crowdsense-web-20251213095230.s3-website.ap-northeast-2.amazonaws.com`
+- **접근**: HTTP만 지원 (HTTPS는 CloudFront 필요)
+- **상태**: ✅ 배포 완료 및 접근 가능
+
+### CloudFront 배포 (계정 검증 대기 중)
 1. CloudFront 배포 완료 대기 (5-10분 소요)
 2. CloudFront 도메인으로 접속 확인
 3. 모든 페이지가 정상 작동하는지 확인
