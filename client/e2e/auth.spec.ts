@@ -116,7 +116,6 @@ test.describe('인증 기능 테스트 - 정일혁 분담', () => {
       expect(registerResponse?.status).toBe(200); // 또는 201
       expect(registerResponse?.requestBody).toEqual({ id: testUserId, password: TEST_PASSWORD });
       expect(registerResponse?.responseBody?.success).toBe(true);
-    }
 
       // 자동 로그인 API 응답 확인
       const loginResponse = apiResponses.find(r => r.url.includes('/auth-login'));
