@@ -1,6 +1,6 @@
-const CACHE_NAME = 'crowdsense-v1';
-const STATIC_CACHE = 'crowdsense-static-v1';
-const DYNAMIC_CACHE = 'crowdsense-dynamic-v1';
+const CACHE_NAME = 'crowdsense-v3';
+const STATIC_CACHE = 'crowdsense-static-v3';
+const DYNAMIC_CACHE = 'crowdsense-dynamic-v3';
 
 // 설치 시 캐시할 파일들
 const STATIC_FILES = [
@@ -11,11 +11,21 @@ const STATIC_FILES = [
 
 // 설치 이벤트
 self.addEventListener('install', (event) => {
-  console.log('[Service Worker] Installing...');
+  console.log('[Service Worker] Installing v3...');
+  // 모든 기존 캐시 삭제
   event.waitUntil(
-    caches.open(STATIC_CACHE).then((cache) => {
-      console.log('[Service Worker] Caching static files');
-      return cache.addAll(STATIC_FILES);
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          console.log('[Service Worker] Deleting all old caches:', cacheName);
+          return caches.delete(cacheName);
+        })
+      );
+    }).then(() => {
+      return caches.open(STATIC_CACHE).then((cache) => {
+        console.log('[Service Worker] Caching static files');
+        return cache.addAll(STATIC_FILES);
+      });
     })
   );
   self.skipWaiting();
@@ -28,15 +38,18 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheName !== STATIC_CACHE && cacheName !== DYNAMIC_CACHE) {
+          // 모든 이전 캐시 삭제 (v1 포함)
+          if (cacheName.startsWith('crowdsense-') && cacheName !== STATIC_CACHE && cacheName !== DYNAMIC_CACHE) {
             console.log('[Service Worker] Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
+    }).then(() => {
+      // 모든 클라이언트에 즉시 적용
+      return self.clients.claim();
     })
   );
-  self.clients.claim();
 });
 
 // fetch 이벤트 - 네트워크 우선, 캐시 fallback
@@ -50,6 +63,9 @@ self.addEventListener('fetch', (event) => {
       url.origin.includes('amazonaws.com') ||
       url.pathname.startsWith('/api/')) {
     event.respondWith(networkFirstStrategy(request));
+  } else if (url.pathname.endsWith('.js') || url.pathname.endsWith('.css')) {
+    // JavaScript/CSS 파일은 네트워크 우선 (캐시 무시)
+    event.respondWith(fetch(request, { cache: 'no-store' }));
   } else {
     // 정적 파일은 캐시 우선
     event.respondWith(cacheFirstStrategy(request));
@@ -72,8 +88,22 @@ async function networkFirstStrategy(request) {
   }
 }
 
-// 캐시 우선 전략
+// 캐시 우선 전략 (HTML 파일은 네트워크 우선으로 변경)
 async function cacheFirstStrategy(request) {
+  const url = new URL(request.url);
+  
+  // HTML 파일은 항상 네트워크에서 가져오기 (캐시 무시)
+  if (url.pathname === '/' || url.pathname.endsWith('.html')) {
+    try {
+      const networkResponse = await fetch(request, { cache: 'no-store' });
+      return networkResponse;
+    } catch (error) {
+      console.error('[Service Worker] Fetch failed:', error);
+      throw error;
+    }
+  }
+  
+  // 다른 정적 파일은 캐시 우선
   const cachedResponse = await caches.match(request);
   if (cachedResponse) {
     return cachedResponse;

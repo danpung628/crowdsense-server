@@ -18,7 +18,7 @@ const getApiBaseUrl = (): string => {
 // API 클라이언트 설정
 export const apiClient = axios.create({
   baseURL: getApiBaseUrl(),
-  timeout: 15000, // 15초로 감소 (너무 오래 기다리지 않도록)
+  timeout: 60000, // 60초로 증가 (Lambda 함수 실행 시간 및 CORS preflight 고려)
   headers: {
     'Content-Type': 'application/json',
   },
@@ -27,7 +27,7 @@ export const apiClient = axios.create({
 // 빠른 응답이 필요한 API용 클라이언트
 export const fastApiClient = axios.create({
   baseURL: getApiBaseUrl(),
-  timeout: 8000, // 8초
+  timeout: 20000, // 20초로 증가
   headers: {
     'Content-Type': 'application/json',
   },
@@ -41,6 +41,16 @@ apiClient.interceptors.request.use(
     if (token && !config.headers.Authorization) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
+    // Auth API는 /prod/auth-* 형태, Data API는 /prod/api/* 형태
+    // Auth API가 아닌 경우 /api를 추가
+    if (config.url && !config.url.startsWith('/auth-')) {
+      // 이미 /api로 시작하지 않으면 추가
+      if (!config.url.startsWith('/api/')) {
+        config.url = '/api' + config.url;
+      }
+    }
+    
     console.log(`🚀 API 요청: ${config.method?.toUpperCase()} ${config.url}`);
     return config;
   },
@@ -138,6 +148,14 @@ fastApiClient.interceptors.response.use(responseSuccessHandler, responseErrorHan
 // fastApiClient 요청 인터셉터
 fastApiClient.interceptors.request.use(
   (config) => {
+    // Auth API는 /prod/auth-* 형태, Data API는 /prod/api/* 형태
+    // Auth API가 아닌 경우 /api를 추가
+    if (config.url && !config.url.startsWith('/auth-')) {
+      // 이미 /api로 시작하지 않으면 추가
+      if (!config.url.startsWith('/api/')) {
+        config.url = '/api' + config.url;
+      }
+    }
     console.log(`🚀 API 요청 (빠른): ${config.method?.toUpperCase()} ${config.url}`);
     return config;
   },
