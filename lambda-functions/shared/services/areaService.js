@@ -41,7 +41,11 @@ class AreaService {
     if (!searchTerm) {
       throw new Error('검색어가 필요합니다.');
     }
-    return areaMapping.searchByName(searchTerm);
+    const results = areaMapping.searchByName(searchTerm);
+    if (!results || results.length === 0) {
+      return [];
+    }
+    return results;
   }
 }
 
