@@ -1,26 +1,13 @@
 ﻿// area-categories Lambda 함수
-// 카테고리 목록 조회
-
-const categories = [
-  "관광특구",
-  "고궁·문화유산",
-  "인구밀집지역",
-  "발달상권",
-  "공원"
-];
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const { categories } = require('/opt/nodejs/areas-data');
 
 export const handler = async (event) => {
   try {
-    // HATEOAS 링크
     const links = {
       self: { href: "/api/areas/categories" },
       all: { href: "/api/areas" }
-    };
-
-    const responseData = {
-      success: true,
-      data: categories,
-      _links: links
     };
 
     return {
@@ -29,7 +16,11 @@ export const handler = async (event) => {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*"
       },
-      body: JSON.stringify(responseData)
+      body: JSON.stringify({
+        success: true,
+        data: categories,
+        _links: links
+      })
     };
   } catch (error) {
     return {

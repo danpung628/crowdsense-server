@@ -18,7 +18,7 @@ const getApiBaseUrl = (): string => {
 // API 클라이언트 설정
 export const apiClient = axios.create({
   baseURL: getApiBaseUrl(),
-  timeout: 60000, // 60초로 증가 (Lambda 함수 실행 시간 및 CORS preflight 고려)
+  timeout: 15000, // 15초로 감소 (너무 오래 기다리지 않도록)
   headers: {
     'Content-Type': 'application/json',
   },
@@ -27,7 +27,7 @@ export const apiClient = axios.create({
 // 빠른 응답이 필요한 API용 클라이언트
 export const fastApiClient = axios.create({
   baseURL: getApiBaseUrl(),
-  timeout: 20000, // 20초로 증가
+  timeout: 8000, // 8초
   headers: {
     'Content-Type': 'application/json',
   },
