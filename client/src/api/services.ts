@@ -369,9 +369,12 @@ export const rankingApi = {
         params: { limit, hours }
       });
       
-      // 응답 구조: { success, data: [...] }
-      const responseData = response.data.data || response.data;
-      const rankings = Array.isArray(responseData) ? responseData : [];
+      // 응답 구조: { success, data: { items: [...], total: ... } }
+      const responseData = response.data.data;
+      // items 배열이 있으면 사용, 없으면 data 자체가 배열인지 확인
+      const rankings = Array.isArray(responseData?.items) 
+        ? responseData.items 
+        : (Array.isArray(responseData) ? responseData : []);
       
       // 백엔드 응답 형식을 프론트엔드 타입으로 변환
       // 백엔드: { rank, areaCode, areaName, category, avgPeople, maxPeople, avgCongestion }
