@@ -25,7 +25,7 @@
 ### 전체 아키텍처 (AWS 서버리스 기반)
 - **API Gateway**: RESTful API 엔드포인트 관리
 - **Lambda**: 서버리스 함수 실행
-- **MongoDB Atlas**: NoSQL 데이터베이스
+- **DynamoDB**: NoSQL 데이터베이스
 - **ElastiCache (Redis)**: 캐시
 - **S3 + CloudFront**: 프론트엔드 배포 및 CDN
 
@@ -65,14 +65,14 @@
 - **API Gateway**: Amazon API Gateway
 - **서버리스**: Amazon Lambda (Node.js 20.x)
 - **언어**: JavaScript/TypeScript
-- **데이터베이스**: MongoDB Atlas
+- **데이터베이스**: Amazon DynamoDB
 - **캐시**: Amazon ElastiCache (Redis)
 - **인증**: JWT (JSON Web Token)
 
 ### AWS 인프라 서비스
 - API Gateway: RESTful API 엔드포인트 관리
 - Lambda: 서버리스 함수 실행
-- MongoDB Atlas: NoSQL 데이터베이스
+- DynamoDB: NoSQL 데이터베이스
 - ElastiCache: Redis 캐시
 - S3: 정적 파일 저장 (프론트엔드 배포)
 - CloudFront: CDN (콘텐츠 전송)
@@ -87,32 +87,35 @@
 
 ## 💾 데이터베이스 설계
 
-### MongoDB Atlas 스키마
+### DynamoDB 테이블 구조
 
-#### User 컬렉션
-- `_id`: ObjectId (MongoDB 자동 생성)
-- `id`: String (unique, required, indexed)
-- `password`: String (hashed, required)
-- `accessToken`: String
-- `refreshToken`: String
-- `createdAt`: Date (indexed)
-- `updatedAt`: Date
+#### User 테이블
+- **Partition Key**: `id` (String)
+- **속성**:
+  - `id`: String (unique, required, indexed)
+  - `password`: String (hashed, required)
+  - `accessToken`: String
+  - `refreshToken`: String
+  - `createdAt`: Number (Unix timestamp in milliseconds, indexed)
+  - `updatedAt`: Number (Unix timestamp in milliseconds)
 
-#### CrowdHistory 컬렉션
-- `_id`: ObjectId (MongoDB 자동 생성)
-- `areaCode`: String (required, indexed)
-- `areaName`: String (required)
-- `category`: String (required)
-- `peopleCount`: Number (default: 0)
-- `congestionLevel`: Number (min: 1, max: 5, default: 3)
-- `rawData`: Mixed (optional)
-- `timestamp`: Date (required, indexed, TTL: 30일)
+#### CrowdHistory 테이블
+- **Partition Key**: `areaCode` (String)
+- **Sort Key**: `timestamp` (Number, Unix timestamp in milliseconds)
+- **속성**:
+  - `areaCode`: String (required, indexed)
+  - `timestamp`: Number (required, indexed, TTL: 30일)
+  - `areaName`: String (required)
+  - `category`: String (required)
+  - `peopleCount`: Number (default: 0)
+  - `congestionLevel`: Number (min: 1, max: 5, default: 3)
+  - `rawData`: Object (optional)
 
 **인덱스 전략**:
-1. `areaCode`: 단일 인덱스 (지역별 조회 최적화)
-2. `timestamp`: TTL 인덱스 (30일 후 자동 삭제)
-3. `{areaCode: 1, timestamp: -1}`: 복합 인덱스 (지역별 시계열 조회 최적화)
-4. `{category: 1, peopleCount: -1, timestamp: -1}`: 복합 인덱스 (카테고리별 랭킹 조회 최적화)
+1. `areaCode`: Partition Key (지역별 조회 최적화)
+2. `timestamp`: Sort Key + TTL (30일 후 자동 삭제)
+3. `{areaCode, timestamp}`: 복합 키 (지역별 시계열 조회 최적화)
+4. `{category, peopleCount, timestamp}`: GSI 고려 (카테고리별 랭킹 조회 최적화)
 
 ### Redis 캐시 구조 (Amazon ElastiCache)
 
@@ -456,7 +459,7 @@ src/
 
 ### 데이터 보안
 - 입력 데이터 검증
-- SQL Injection 방지 (MongoDB 사용으로 자동 방지)
+- SQL Injection 방지 (DynamoDB 사용으로 자동 방지)
 - XSS 방지 (React 자동 이스케이프)
 - Rate Limiting
 
@@ -475,7 +478,7 @@ src/
 |------|-----------|
 | 프론트엔드 배포 | S3 버킷, CloudFront (CDN) |
 | 백엔드 배포 | API Gateway, Lambda, CloudWatch |
-| 데이터베이스 | MongoDB Atlas, ElastiCache (Redis) |
+| 데이터베이스 | DynamoDB, ElastiCache (Redis) |
 
 ### 배포 프로세스
 
@@ -494,7 +497,7 @@ src/
 7. CloudWatch 알람 설정
 
 ### 환경 변수 관리
-- MongoDB 연결 문자열
+- DynamoDB 연결 정보
 - Redis 연결 정보
 - JWT 시크릿 키
 - 외부 API 키
@@ -609,7 +612,7 @@ layers/
 - Lambda 함수와 연결
 
 #### Phase 3: 데이터베이스 마이그레이션
-- MongoDB → MongoDB Atlas로 전환
+- MongoDB → DynamoDB로 전환
 - Redis → ElastiCache로 전환
 
 #### Phase 4: 프론트엔드 배포
@@ -623,7 +626,7 @@ layers/
 | 이름 | 역할 | 담당 업무 |
 |------|------|----------|
 | 서성덕 | 팀장, 백엔드 개발자 | AWS Lambda 함수 개발, API Gateway 설계 및 구성, RESTful API 설계 및 구현, 전체 아키텍처 설계, 인증 시스템 구현 (Lambda Authorizer), 서버리스 아키텍처 설계 |
-| 김휘성 | 데이터 엔지니어 | 공공데이터 API 연동 (Lambda 함수), 데이터 전처리 및 변환, MongoDB Atlas 스키마 설계, Redis 캐싱 전략 (ElastiCache), Lambda 함수 내 데이터 처리 로직 |
+| 김휘성 | 데이터 엔지니어 | 공공데이터 API 연동 (Lambda 함수), 데이터 전처리 및 변환, DynamoDB 스키마 설계, Redis 캐싱 전략 (ElastiCache), Lambda 함수 내 데이터 처리 로직 |
 | 노원우 | 풀스택 개발자 | Lambda 함수 보조 개발, 프론트엔드 보조, API 통신 로직, 데이터 바인딩, AWS 서비스 연동 보조 |
 | 정일혁 | 프론트엔드 개발자 | React UI/UX 구현, 모바일/PC 반응형 디자인, PWA 기능 구현, 실시간 알림 구현, 프론트엔드 최적화, API Gateway 연동 |
 

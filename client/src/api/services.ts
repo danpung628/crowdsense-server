@@ -230,26 +230,52 @@ export const parkingApi = {
 export const areaApi = {
   // 전체 지역 조회
   getAll: async (): Promise<AreaInfo[]> => {
-    const response = await apiClient.get('/areas'); // /api 제거
-    return response.data.data || response.data;
+    const response = await apiClient.get('/areas');
+    // Lambda 응답: {success: true, data: {items: [...], total: ...}}
+    const responseData = response.data.data || response.data;
+    const items = responseData.items || responseData;
+    
+    if (!Array.isArray(items)) {
+      console.warn('⚠️ Area API 응답이 배열이 아닙니다:', items);
+      return [];
+    }
+    
+    return items;
   },
 
   // 특정 지역 조회
   getByCode: async (areaCode: string): Promise<AreaInfo> => {
     const response = await apiClient.get(`/areas/${areaCode}`);
+    // Lambda 응답: {success: true, data: {...}}
     return response.data.data || response.data;
   },
 
   // 카테고리 목록 조회
   getCategories: async (): Promise<string[]> => {
     const response = await apiClient.get('/areas/categories');
-    return response.data.data || response.data;
+    // Lambda 응답: {success: true, data: [...]}
+    const categories = response.data.data || response.data;
+    
+    if (!Array.isArray(categories)) {
+      console.warn('⚠️ Categories API 응답이 배열이 아닙니다:', categories);
+      return [];
+    }
+    
+    return categories;
   },
 
   // 카테고리별 조회
   getByCategory: async (category: string): Promise<AreaInfo[]> => {
-    const response = await apiClient.get(`/areas/category/${category}`);
-    return response.data.data || response.data;
+    const response = await apiClient.get(`/areas/category/${encodeURIComponent(category)}`);
+    // Lambda 응답: {success: true, data: [...], total: ...}
+    const results = response.data.data || response.data;
+    
+    if (!Array.isArray(results)) {
+      console.warn('⚠️ Category API 응답이 배열이 아닙니다:', results);
+      return [];
+    }
+    
+    return results;
   },
 
   // 검색
@@ -257,7 +283,15 @@ export const areaApi = {
     const response = await apiClient.get('/areas/search', {
       params: { q: query },
     });
-    return response.data.data || response.data;
+    // Lambda 응답: {success: true, data: [...], total: ...}
+    const results = response.data.data || response.data;
+    
+    if (!Array.isArray(results)) {
+      console.warn('⚠️ Search API 응답이 배열이 아닙니다:', results);
+      return [];
+    }
+    
+    return results;
   },
 };
 

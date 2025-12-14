@@ -136,7 +136,8 @@ aws cloudfront create-invalidation \
 프로덕션 환경에서는 `.env.production` 파일을 사용합니다:
 
 ```env
-VITE_API_BASE_URL=https://your-api-gateway-url.execute-api.ap-northeast-2.amazonaws.com/prod/api
+# 노원우님이 배포한 API Gateway URL
+VITE_API_BASE_URL=https://cntfsdk0vc.execute-api.ap-southeast-2.amazonaws.com/prod/api
 ```
 
 빌드 시 자동으로 적용됩니다:

@@ -8,11 +8,14 @@ const getApiBaseUrl = (): string => {
   const baseUrl = import.meta.env.VITE_API_BASE_URL;
   
   if (baseUrl) {
-    return baseUrl;
+    // Base URL에서 끝의 /api 제거 (인터셉터에서 자동 추가하므로)
+    // 예: https://...amazonaws.com/prod/api -> https://...amazonaws.com/prod
+    return baseUrl.replace(/\/api\/?$/, '');
   }
   
   // 기본값: 개발 환경 (로컬 Express 서버)
-  return 'http://localhost:3000/api';
+  // 인터셉터에서 /api를 추가하므로 여기서는 /api 없이
+  return 'http://localhost:3000';
 };
 
 // API 클라이언트 설정
@@ -44,14 +47,20 @@ apiClient.interceptors.request.use(
     
     // Auth API는 /prod/auth-* 형태, Data API는 /prod/api/* 형태
     // Auth API가 아닌 경우 /api를 추가
-    if (config.url && !config.url.startsWith('/auth-')) {
-      // 이미 /api로 시작하지 않으면 추가
-      if (!config.url.startsWith('/api/')) {
-        config.url = '/api' + config.url;
+    if (config.url) {
+      // Auth API가 아니고, 이미 /api로 시작하지 않으면 추가
+      if (!config.url.startsWith('/auth-') && !config.url.startsWith('/api/')) {
+        // URL이 /로 시작하면 /api를 앞에 추가, 아니면 /api/를 앞에 추가
+        if (config.url.startsWith('/')) {
+          config.url = '/api' + config.url;
+        } else {
+          config.url = '/api/' + config.url;
+        }
       }
     }
     
-    console.log(`🚀 API 요청: ${config.method?.toUpperCase()} ${config.url}`);
+    // 디버깅: 최종 URL 확인
+    console.log(`🚀 API 요청: ${config.method?.toUpperCase()} ${config.url} (baseURL: ${config.baseURL})`);
     return config;
   },
   (error) => {
@@ -101,12 +110,22 @@ const responseErrorHandler = (error: any) => {
     const responseData = error.response.data;
     console.error('❌ 서버 오류:', status, responseData);
     
+    // Lambda 타임아웃 에러 처리
+    if (responseData && responseData.errorType === 'Sandbox.Timedout') {
+      error.message = '서버 처리 시간이 초과되었습니다. 잠시 후 다시 시도해주세요.';
+      error.retryable = true;
+      return Promise.reject(error);
+    }
+    
     // 에러 메시지 추출 (여러 형태 지원)
-    // Lambda 응답 구조: {success: false, error: {code, message}}
+    // Lambda 응답 구조: {success: false, error: {code, message}} 또는 {errorType, errorMessage}
     let errorMessage = '알 수 없는 오류';
     if (responseData) {
       if (typeof responseData === 'string') {
         errorMessage = responseData;
+      } else if (responseData.errorMessage) {
+        // Lambda 타임아웃 에러: {errorType, errorMessage}
+        errorMessage = responseData.errorMessage;
       } else if (responseData.error) {
         if (typeof responseData.error === 'string') {
           errorMessage = responseData.error;
@@ -150,10 +169,15 @@ fastApiClient.interceptors.request.use(
   (config) => {
     // Auth API는 /prod/auth-* 형태, Data API는 /prod/api/* 형태
     // Auth API가 아닌 경우 /api를 추가
-    if (config.url && !config.url.startsWith('/auth-')) {
-      // 이미 /api로 시작하지 않으면 추가
-      if (!config.url.startsWith('/api/')) {
-        config.url = '/api' + config.url;
+    if (config.url) {
+      // Auth API가 아니고, 이미 /api로 시작하지 않으면 추가
+      if (!config.url.startsWith('/auth-') && !config.url.startsWith('/api/')) {
+        // URL이 /로 시작하면 /api를 앞에 추가, 아니면 /api/를 앞에 추가
+        if (config.url.startsWith('/')) {
+          config.url = '/api' + config.url;
+        } else {
+          config.url = '/api/' + config.url;
+        }
       }
     }
     console.log(`🚀 API 요청 (빠른): ${config.method?.toUpperCase()} ${config.url}`);
