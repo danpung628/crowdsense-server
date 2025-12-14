@@ -48,3 +48,29 @@ Reference: `resources/docs/BROWSER-AUTOMATION-GUIDE.md`
 - Default region: `ap-southeast-2` (stored in `.aws-region` file)
 - Always read region from `.aws-region` file in deployment scripts
 - Reference: `README-AWS-REGION.md`
+
+## Test Account Credentials (IMPORTANT - DO NOT FORGET)
+
+**CrowdSense 테스트 계정:**
+- 아이디: `ilhyuk`
+- 비밀번호: `asd123!@#`
+
+**When testing in browser:**
+- ALWAYS use these credentials for login
+- DO NOT ask user for login credentials
+- Remember: 아이디는 `ilhyuk`, 비밀번호는 `asd123!@#`
+
+## ElastiCache / Redis Strategy (IMPORTANT - DO NOT FORGET)
+
+**현재 구현 전략:**
+- ElastiCache는 비용 문제로 현재 사용하지 않음
+- 목업 Redis를 사용 중 (인메모리 캐시)
+- DynamoDB에 데이터는 계속 저장되고 있음
+- 발표 시점에 ElastiCache로 전환 예정
+
+**When working with caching:**
+- DO NOT suggest using ElastiCache for now
+- Current implementation uses mock Redis (in-memory)
+- Data is being stored in DynamoDB continuously
+- Plan to switch to ElastiCache before presentation/demo
+- This is a cost-saving measure during development
