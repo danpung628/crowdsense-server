@@ -8,7 +8,7 @@ const getApiBaseUrl = (): string => {
   const baseUrl = import.meta.env.VITE_API_BASE_URL;
   
   if (baseUrl) {
-    // Base URL에서 끝의 /api 제거 (인터셉터에서 자동 추가하므로)
+    // Base URL에서 끝의 /api 제거 (인터셉터에서 자동 추가)
     // 예: https://...amazonaws.com/prod/api -> https://...amazonaws.com/prod
     return baseUrl.replace(/\/api\/?$/, '');
   }
@@ -45,8 +45,8 @@ apiClient.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
     
-    // Auth API는 /prod/auth-* 형태, Data API는 /prod/api/* 형태
-    // Auth API가 아닌 경우 /api를 추가
+    // Auth API는 /auth-* 형태, Data API는 /api/* 형태
+    // Base URL에 이미 /api가 포함되어 있으므로, Auth API가 아닌 경우 /api를 추가
     if (config.url) {
       // Auth API가 아니고, 이미 /api로 시작하지 않으면 추가
       if (!config.url.startsWith('/auth-') && !config.url.startsWith('/api/')) {
@@ -59,8 +59,7 @@ apiClient.interceptors.request.use(
       }
     }
     
-    // 디버깅: 최종 URL 확인
-    console.log(`🚀 API 요청: ${config.method?.toUpperCase()} ${config.url} (baseURL: ${config.baseURL})`);
+    console.log(`🚀 API 요청: ${config.method?.toUpperCase()} ${config.url}`);
     return config;
   },
   (error) => {
@@ -167,8 +166,8 @@ fastApiClient.interceptors.response.use(responseSuccessHandler, responseErrorHan
 // fastApiClient 요청 인터셉터
 fastApiClient.interceptors.request.use(
   (config) => {
-    // Auth API는 /prod/auth-* 형태, Data API는 /prod/api/* 형태
-    // Auth API가 아닌 경우 /api를 추가
+    // Auth API는 /auth-* 형태, Data API는 /api/* 형태
+    // Base URL에 이미 /api가 포함되어 있으므로, Auth API가 아닌 경우 /api를 추가
     if (config.url) {
       // Auth API가 아니고, 이미 /api로 시작하지 않으면 추가
       if (!config.url.startsWith('/auth-') && !config.url.startsWith('/api/')) {

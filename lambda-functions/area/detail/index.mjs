@@ -1,9 +1,27 @@
-﻿// area-detail Lambda 함수
+// area-detail Lambda 함수
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 const { areas } = require('/opt/nodejs/areas-data');
 
 export const handler = async (event) => {
+  // CORS 헤더
+  const corsHeaders = {
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Methods": "GET, OPTIONS"
+  };
+
+  // OPTIONS 요청 처리 (CORS preflight)
+  const httpMethod = event.requestContext?.http?.method || event.httpMethod || event.requestContext?.httpMethod;
+  if (httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers: corsHeaders,
+      body: ''
+    };
+  }
+
   try {
     const areaCode = event.pathParameters?.areaCode || '';
     
@@ -12,10 +30,7 @@ export const handler = async (event) => {
     if (!area) {
       return {
         statusCode: 404,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*"
-        },
+        headers: corsHeaders,
         body: JSON.stringify({
           success: false,
           error: `지역 코드를 찾을 수 없습니다: ${areaCode}`
@@ -31,10 +46,7 @@ export const handler = async (event) => {
 
     return {
       statusCode: 200,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*"
-      },
+      headers: corsHeaders,
       body: JSON.stringify({
         success: true,
         data: area,
@@ -44,10 +56,7 @@ export const handler = async (event) => {
   } catch (error) {
     return {
       statusCode: 500,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*"
-      },
+      headers: corsHeaders,
       body: JSON.stringify({
         success: false,
         error: error.message
