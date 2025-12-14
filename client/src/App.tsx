@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import { AuthProvider } from "./contexts/AuthContext";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 
 import { lazy, Suspense } from "react";
 
@@ -33,15 +34,15 @@ function App() {
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
           <Suspense fallback={<LoadingFallback />}>
             <Routes>
-              <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
-              <Route path="/crowd" element={<CrowdMap />} />
-              <Route path="/crowd/:areaCode" element={<CrowdDetail />} />
-              <Route path="/transit" element={<Transit />} />
-              <Route path="/parking" element={<Parking />} />
-              <Route path="/popular" element={<PopularPlaces />} />
-              <Route path="/history/:areaCode" element={<HistoryView />} />
+              <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+              <Route path="/crowd" element={<ProtectedRoute><CrowdMap /></ProtectedRoute>} />
+              <Route path="/crowd/:areaCode" element={<ProtectedRoute><CrowdDetail /></ProtectedRoute>} />
+              <Route path="/transit" element={<ProtectedRoute><Transit /></ProtectedRoute>} />
+              <Route path="/parking" element={<ProtectedRoute><Parking /></ProtectedRoute>} />
+              <Route path="/popular" element={<ProtectedRoute><PopularPlaces /></ProtectedRoute>} />
+              <Route path="/history/:areaCode" element={<ProtectedRoute><HistoryView /></ProtectedRoute>} />
             </Routes>
           </Suspense>
         </main>
