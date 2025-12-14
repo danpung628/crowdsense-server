@@ -1,5 +1,5 @@
-﻿// lambda-functions/subway/list/index.js
-const subwayService = require('/opt/nodejs/shared/services/subwayService.js');
+// lambda-functions/subway/list/index.mjs
+const subwayService = require('/opt/nodejs/shared/services/subwayService');
 function createResponse(statusCode, body) {
   return {
     statusCode,

@@ -12,6 +12,10 @@ with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
         for file in files:
             file_path = Path(root) / file
             arcname = file_path.relative_to(base_path.parent)
-            zipf.write(file_path, arcname)
+            try:
+                zipf.write(file_path, arcname)
+            except Exception as e:
+                print(f'Warning: Could not add {file_path}: {e}')
 
-print(f'ZIP created: {zip_path} ({zip_path.stat().st_size / 1024 / 1024:.2f} MB)')
+size_mb = zip_path.stat().st_size / 1024 / 1024
+print(f'ZIP created: {zip_path} ({size_mb:.2f} MB)')

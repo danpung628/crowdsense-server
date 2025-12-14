@@ -1,4 +1,4 @@
-// lambda-functions/crowd/list/index.mjs
+// lambda-functions/crowd/list/index.js
 const crowdService = require('/opt/nodejs/shared/services/crowdService');
 /**
  * HTTP 응답 생성 헬퍼
