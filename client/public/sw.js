@@ -1,6 +1,6 @@
-const CACHE_NAME = 'crowdsense-v4';
-const STATIC_CACHE = 'crowdsense-static-v4';
-const DYNAMIC_CACHE = 'crowdsense-dynamic-v4';
+const CACHE_NAME = 'crowdsense-v5';
+const STATIC_CACHE = 'crowdsense-static-v5';
+const DYNAMIC_CACHE = 'crowdsense-dynamic-v5';
 
 // 설치 시 캐시할 파일들
 const STATIC_FILES = [
@@ -60,13 +60,19 @@ self.addEventListener('fetch', (event) => {
 async function networkFirstStrategy(request) {
   try {
     const networkResponse = await fetch(request);
-    const cache = await caches.open(DYNAMIC_CACHE);
-    cache.put(request, networkResponse.clone());
+    // GET 요청만 캐시 (POST, PUT, DELETE 등은 캐시하지 않음)
+    if (request.method === 'GET') {
+      const cache = await caches.open(DYNAMIC_CACHE);
+      cache.put(request, networkResponse.clone());
+    }
     return networkResponse;
   } catch (error) {
-    const cachedResponse = await caches.match(request);
-    if (cachedResponse) {
-      return cachedResponse;
+    // GET 요청만 캐시에서 찾기
+    if (request.method === 'GET') {
+      const cachedResponse = await caches.match(request);
+      if (cachedResponse) {
+        return cachedResponse;
+      }
     }
     throw error;
   }
@@ -74,15 +80,21 @@ async function networkFirstStrategy(request) {
 
 // 캐시 우선 전략
 async function cacheFirstStrategy(request) {
-  const cachedResponse = await caches.match(request);
-  if (cachedResponse) {
-    return cachedResponse;
+  // GET 요청만 캐시에서 찾기
+  if (request.method === 'GET') {
+    const cachedResponse = await caches.match(request);
+    if (cachedResponse) {
+      return cachedResponse;
+    }
   }
 
   try {
     const networkResponse = await fetch(request);
-    const cache = await caches.open(STATIC_CACHE);
-    cache.put(request, networkResponse.clone());
+    // GET 요청만 캐시에 저장
+    if (request.method === 'GET') {
+      const cache = await caches.open(STATIC_CACHE);
+      cache.put(request, networkResponse.clone());
+    }
     return networkResponse;
   } catch (error) {
     console.error('[Service Worker] Fetch failed:', error);
