@@ -11,7 +11,7 @@ if (Test-Path $regionFile) {
     $region = (Get-Content $regionFile -Raw).Trim()
     Write-Host "📍 리전: $region (.aws-region 파일에서 읽음)" -ForegroundColor Cyan
 } else {
-    $region = "ap-southeast-2"
+$region = "ap-southeast-2"
     Write-Host "⚠️  .aws-region 파일이 없어 기본 리전 사용: $region" -ForegroundColor Yellow
 }
 

@@ -61,9 +61,20 @@ Write-Host "  ✓ nodejs/shared 폴더 생성" -ForegroundColor Green
 # 파일 복사 (nodejs/shared/ 구조로)
 # 절대 nodejs/ 바로 아래에 복사하지 마세요!
 Copy-Item -Recurse utils,services,models,middlewares,data nodejs\shared\ -ErrorAction SilentlyContinue
-if (Test-Path areacode.csv) {
+
+# areacode.csv 파일 복사 (server/areacode.csv에서 찾기)
+$areacodePath = Join-Path $projectRoot "server\areacode.csv"
+if (Test-Path $areacodePath) {
+    Copy-Item $areacodePath nodejs\shared\areacode.csv
+    Write-Host "  ✓ areacode.csv 복사 완료" -ForegroundColor Green
+} elseif (Test-Path areacode.csv) {
+    # shared 폴더에 직접 있는 경우도 확인
     Copy-Item areacode.csv nodejs\shared\
+    Write-Host "  ✓ areacode.csv 복사 완료 (shared 폴더에서)" -ForegroundColor Green
+} else {
+    Write-Host "  ⚠️  areacode.csv 파일을 찾을 수 없습니다. server/areacode.csv를 확인하세요." -ForegroundColor Yellow
 }
+
 Write-Host "  ✓ 파일 복사 완료 (nodejs/shared/ 구조)" -ForegroundColor Green
 
 # 의존성 설치 (nodejs/shared/ 디렉토리에서 실행)

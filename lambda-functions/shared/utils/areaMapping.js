@@ -22,10 +22,11 @@ class AreaMapping {
       
       // 가능한 경로들 시도
       const possiblePaths = [
+        '/opt/nodejs/shared/areacode.csv', // Lambda Layer 경로 (nodejs/shared 구조)
         path.join(__dirname, '../../../areacode.csv'),
         path.join(__dirname, '../../../../areacode.csv'),
         path.join(process.cwd(), 'areacode.csv'),
-        '/opt/areacode.csv' // Lambda Layer 경로
+        '/opt/areacode.csv' // Lambda Layer 경로 (구버전 호환)
       ];
 
       let csvPath = null;

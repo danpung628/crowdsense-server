@@ -74,3 +74,18 @@ Reference: `resources/docs/BROWSER-AUTOMATION-GUIDE.md`
 - Data is being stored in DynamoDB continuously
 - Plan to switch to ElastiCache before presentation/demo
 - This is a cost-saving measure during development
+
+## Deployment (CRITICAL - DO NOT ASK USER TO DEPLOY)
+
+**ALWAYS deploy yourself when code changes are made:**
+- Lambda Layer 배포: `lambda-functions/shared/deploy-layer.ps1` 실행
+- Lambda 함수 Layer 업데이트: 배포 후 자동으로 모든 함수 업데이트
+- Frontend 배포: `client/deploy.ps1` 실행
+- NEVER ask user to deploy manually
+- NEVER say "you need to deploy" or "please deploy"
+- ALWAYS execute deployment scripts directly
+
+**When user says "배포했어" or "deployed":**
+- Verify deployment was successful
+- Update Lambda functions to use new Layer version if needed
+- Test in browser to confirm changes are working
