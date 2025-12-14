@@ -1,5 +1,6 @@
 const dynamoClient = require('../utils/dynamoClient');
 const { PutCommand, QueryCommand, ScanCommand } = require('@aws-sdk/lib-dynamodb');
+const areaMapping = require('../utils/areaMapping');
 
 const TABLE_NAME = process.env.DYNAMODB_CROWD_HISTORY_TABLE_NAME || 'CrowdHistory';
 
@@ -69,7 +70,8 @@ class CrowdHistoryDynamo {
   }
 
   /**
-   * 카테고리별 랭킹 조회 (Aggregation)
+   * 카테고리별 랭킹 조회 (Aggregation) - 최적화된 버전
+   * 각 areaCode별로 Query를 병렬 수행하여 Scan보다 훨씬 빠름
    * @param {number} hours - 조회할 시간 범위 (시간)
    * @param {string} category - 카테고리 (선택)
    * @param {number} limit - 제한 개수
@@ -79,48 +81,76 @@ class CrowdHistoryDynamo {
     try {
       const startTime = Date.now() - (hours * 60 * 60 * 1000);
       
-      // Scan으로 모든 데이터 가져오기 (비효율적이지만 DynamoDB 제약)
-      // 실제 운영에서는 GSI(Global Secondary Index) 사용 권장
-      const result = await dynamoClient.send(new ScanCommand({
-        TableName: TABLE_NAME,
-        FilterExpression: '#ts >= :startTime' + (category ? ' AND category = :category' : ''),
-        ExpressionAttributeNames: {
-          '#ts': 'timestamp'
-        },
-        ExpressionAttributeValues: {
-          ':startTime': startTime,
-          ...(category ? { ':category': category } : {})
-        }
-      }));
-
-      // 메모리에서 Aggregation 수행
-      const items = result.Items || [];
+      // 모든 areaCode 목록 가져오기
+      const allAreas = areaMapping.getAllAreas();
       
-      // areaCode별로 그룹화
+      // 카테고리 필터링 (있는 경우)
+      const targetAreaCodes = category 
+        ? allAreas.filter(area => area.category === category).map(area => area.areaCode)
+        : allAreas.map(area => area.areaCode);
+      
+      // 각 areaCode별로 Query 병렬 수행
+      const queryPromises = targetAreaCodes.map(areaCode => 
+        dynamoClient.send(new QueryCommand({
+          TableName: TABLE_NAME,
+          KeyConditionExpression: 'areaCode = :areaCode AND #ts >= :startTime',
+          ExpressionAttributeNames: {
+            '#ts': 'timestamp'
+          },
+          ExpressionAttributeValues: {
+            ':areaCode': areaCode,
+            ':startTime': startTime
+          }
+        })).then(result => ({
+          areaCode,
+          items: result.Items || []
+        })).catch(error => {
+          console.error(`Query failed for ${areaCode}:`, error);
+          return { areaCode, items: [] };
+        })
+      );
+      
+      // 모든 Query 결과를 병렬로 기다림
+      const results = await Promise.all(queryPromises);
+      
+      // areaCode별로 그룹화 및 집계
       const grouped = {};
-      items.forEach(item => {
-        if (!grouped[item.areaCode]) {
-          grouped[item.areaCode] = {
-            areaCode: item.areaCode,
-            areaName: item.areaName,
-            category: item.category,
+      results.forEach(({ areaCode, items }) => {
+        if (items.length === 0) return;
+        
+        const areaInfo = areaMapping.getAreaByCode(areaCode);
+        if (!areaInfo) return;
+        
+        // 카테고리 필터링 (추가 확인)
+        if (category && areaInfo.category !== category) return;
+        
+        if (!grouped[areaCode]) {
+          grouped[areaCode] = {
+            areaCode,
+            areaName: areaInfo.areaName || areaCode,
+            category: areaInfo.category,
             peopleCounts: [],
             congestionLevels: []
           };
         }
-        grouped[item.areaCode].peopleCounts.push(item.peopleCount);
-        grouped[item.areaCode].congestionLevels.push(item.congestionLevel);
+        
+        items.forEach(item => {
+          grouped[areaCode].peopleCounts.push(item.peopleCount || 0);
+          grouped[areaCode].congestionLevels.push(item.congestionLevel || 3);
+        });
       });
 
       // 평균 계산 및 정렬
-      const rankings = Object.values(grouped).map(group => ({
-        areaCode: group.areaCode,
-        areaName: group.areaName,
-        category: group.category,
-        avgPeople: Math.round(group.peopleCounts.reduce((a, b) => a + b, 0) / group.peopleCounts.length),
-        maxPeople: Math.max(...group.peopleCounts),
-        avgCongestion: Math.round((group.congestionLevels.reduce((a, b) => a + b, 0) / group.congestionLevels.length) * 10) / 10
-      }));
+      const rankings = Object.values(grouped)
+        .filter(group => group.peopleCounts.length > 0) // 데이터가 있는 것만
+        .map(group => ({
+          areaCode: group.areaCode,
+          areaName: group.areaName,
+          category: group.category,
+          avgPeople: Math.round(group.peopleCounts.reduce((a, b) => a + b, 0) / group.peopleCounts.length),
+          maxPeople: Math.max(...group.peopleCounts),
+          avgCongestion: Math.round((group.congestionLevels.reduce((a, b) => a + b, 0) / group.congestionLevels.length) * 10) / 10
+        }));
 
       // 평균 인구수 기준 내림차순 정렬
       rankings.sort((a, b) => b.avgPeople - a.avgPeople);
