@@ -1,5 +1,19 @@
 # Lambda Layer 배포 스크립트
 # 리전을 .aws-region 파일에서 자동으로 읽어옵니다
+#
+# ⚠️ 중요: Lambda Layer 구조
+# ============================
+# Lambda Layer는 반드시 nodejs/shared/ 구조로 패키징되어야 합니다.
+# Lambda 함수에서 require('/opt/nodejs/shared/services/crowdService')로 import하므로
+# Layer 내부 구조는 다음과 같아야 합니다:
+#   nodejs/
+#     shared/
+#       services/
+#       utils/
+#       models/
+#       ...
+# 절대 nodejs/services/ 같은 구조로 배포하지 마세요!
+# ============================
 
 $ErrorActionPreference = "Stop"
 
@@ -38,18 +52,22 @@ if (Test-Path nodejs) {
     Write-Host "  ✓ 기존 nodejs 폴더 삭제" -ForegroundColor Green
 }
 
-# nodejs/shared 폴더 구조 생성
+# ⚠️ 중요: nodejs/shared/ 구조로 생성
+# Lambda 함수는 /opt/nodejs/shared/services/crowdService를 찾으므로
+# 반드시 nodejs/shared/ 구조로 패키징해야 합니다.
 mkdir nodejs\shared | Out-Null
 Write-Host "  ✓ nodejs/shared 폴더 생성" -ForegroundColor Green
 
 # 파일 복사 (nodejs/shared/ 구조로)
+# 절대 nodejs/ 바로 아래에 복사하지 마세요!
 Copy-Item -Recurse utils,services,models,middlewares,data nodejs\shared\ -ErrorAction SilentlyContinue
 if (Test-Path areacode.csv) {
     Copy-Item areacode.csv nodejs\shared\
 }
 Write-Host "  ✓ 파일 복사 완료 (nodejs/shared/ 구조)" -ForegroundColor Green
 
-# 의존성 설치
+# 의존성 설치 (nodejs/shared/ 디렉토리에서 실행)
+# package.json과 node_modules가 nodejs/shared/ 아래에 생성됩니다.
 Set-Location nodejs\shared
 if (-not (Test-Path package.json)) {
     Write-Host "  📝 package.json 생성 중..." -ForegroundColor Yellow

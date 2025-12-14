@@ -228,6 +228,20 @@ Error: Failed to fetch data from Seoul API
 ### 401 Unauthorized 오류
 → `DEV_FLAG=1`로 설정하거나 로그인하여 토큰 획득 후 사용
 
+## AWS 배포 가이드
+
+### Lambda Layer 구조
+
+**⚠️ 중요**: Lambda Layer는 반드시 `nodejs/shared/` 구조로 패키징되어야 합니다.
+
+자세한 내용은 [Lambda Layer 구조 가이드](resources/docs/LAMBDA-LAYER-STRUCTURE.md)를 참조하세요.
+
+### 브라우저 자동화
+
+AWS 콘솔 확인 시 브라우저가 열려 있다면 브라우저 도구를 활용하세요.
+
+자세한 내용은 [브라우저 자동화 가이드](resources/docs/BROWSER-AUTOMATION-GUIDE.md)를 참조하세요.
+
 ## 라이선스
 
 ISC

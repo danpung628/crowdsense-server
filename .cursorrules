@@ -1,0 +1,50 @@
+# Cursor AI Assistant Rules for CrowdSense Project
+
+## Lambda Layer Structure (CRITICAL - DO NOT FORGET)
+
+**Lambda Layer MUST be packaged with `nodejs/shared/` directory structure.**
+
+- Lambda functions import: `require('/opt/nodejs/shared/services/crowdService')`
+- Layer structure must be: `nodejs/shared/services/...`
+- NEVER use `nodejs/services/` structure
+- Always check `deploy-layer.ps1` script ensures `nodejs\shared\` structure
+
+Reference: `resources/docs/LAMBDA-LAYER-STRUCTURE.md`
+
+## Browser Automation (MANDATORY)
+
+**If user has browser open, ALWAYS use browser tools instead of asking user to check.**
+
+### When to use browser:
+- AWS Console checks (Lambda, CloudWatch, API Gateway, DynamoDB, ElastiCache)
+- Deployment status verification
+- Error debugging from CloudWatch logs
+- Configuration verification
+
+### Available browser tools:
+- `browser_snapshot`: Capture page accessibility snapshot
+- `browser_navigate`: Navigate to URL
+- `browser_click`: Click elements
+- `browser_type`: Type text
+- `browser_tabs`: Manage tabs (list, switch, create, close)
+- `browser_console_messages`: Check console messages
+- `browser_network_requests`: Check network requests
+
+### Workflow:
+1. Check open tabs: `browser_tabs({ action: "list" })`
+2. Navigate to AWS console if needed
+3. Use `browser_snapshot()` to understand page structure
+4. Interact with elements using refs from snapshot
+
+### DO NOT:
+- Ask user to "check in browser" if browser is available
+- Use terminal commands when browser can do it faster
+- Skip browser verification when it's open
+
+Reference: `resources/docs/BROWSER-AUTOMATION-GUIDE.md`
+
+## AWS Region
+
+- Default region: `ap-southeast-2` (stored in `.aws-region` file)
+- Always read region from `.aws-region` file in deployment scripts
+- Reference: `README-AWS-REGION.md`
