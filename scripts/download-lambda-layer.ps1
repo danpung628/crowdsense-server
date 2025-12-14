@@ -1,9 +1,22 @@
 # Lambda Layer 코드를 다운로드하여 lambda-functions/shared로 동기화
 
 $ErrorActionPreference = "Continue"
-$region = "ap-southeast-2"
-$layerName = "shared"
-$layerVersion = 8
+
+# 리전 읽기 (.aws-region 파일에서)
+$scriptPath = Split-Path -Parent $MyInvocation.MyCommand.Path
+$projectRoot = Split-Path -Parent $scriptPath
+$regionFile = Join-Path $projectRoot ".aws-region"
+
+if (Test-Path $regionFile) {
+    $region = (Get-Content $regionFile -Raw).Trim()
+    Write-Host "📍 리전: $region (.aws-region 파일에서 읽음)" -ForegroundColor Cyan
+} else {
+    $region = "ap-southeast-2"
+    Write-Host "⚠️  .aws-region 파일이 없어 기본 리전 사용: $region" -ForegroundColor Yellow
+}
+
+$layerName = "crowdsense-shared"
+$layerVersion = 15  # 최신 버전 (필요시 수정)
 
 Write-Host "Lambda Layer 다운로드 시작..." -ForegroundColor Cyan
 Write-Host "Layer: $layerName (버전 $layerVersion)" -ForegroundColor Yellow

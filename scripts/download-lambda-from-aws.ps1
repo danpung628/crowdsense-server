@@ -1,7 +1,19 @@
 # AWS Lambda 함수 코드를 다운로드하여 로컬 파일 덮어쓰기
 
 $ErrorActionPreference = "Continue"
-$region = "ap-southeast-2"
+
+# 리전 읽기 (.aws-region 파일에서)
+$scriptPath = Split-Path -Parent $MyInvocation.MyCommand.Path
+$projectRoot = Split-Path -Parent $scriptPath
+$regionFile = Join-Path $projectRoot ".aws-region"
+
+if (Test-Path $regionFile) {
+    $region = (Get-Content $regionFile -Raw).Trim()
+    Write-Host "📍 리전: $region (.aws-region 파일에서 읽음)" -ForegroundColor Cyan
+} else {
+    $region = "ap-southeast-2"
+    Write-Host "⚠️  .aws-region 파일이 없어 기본 리전 사용: $region" -ForegroundColor Yellow
+}
 
 $mappings = @{
     "auth-register" = "lambda-functions/auth/register/index.js"
