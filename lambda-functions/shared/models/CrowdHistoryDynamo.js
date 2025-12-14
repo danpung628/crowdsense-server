@@ -89,29 +89,51 @@ class CrowdHistoryDynamo {
         ? allAreas.filter(area => area.category === category).map(area => area.areaCode)
         : allAreas.map(area => area.areaCode);
       
-      // 각 areaCode별로 Query 병렬 수행
-      const queryPromises = targetAreaCodes.map(areaCode => 
-        dynamoClient.send(new QueryCommand({
-          TableName: TABLE_NAME,
-          KeyConditionExpression: 'areaCode = :areaCode AND #ts >= :startTime',
-          ExpressionAttributeNames: {
-            '#ts': 'timestamp'
-          },
-          ExpressionAttributeValues: {
-            ':areaCode': areaCode,
-            ':startTime': startTime
-          }
-        })).then(result => ({
-          areaCode,
-          items: result.Items || []
-        })).catch(error => {
-          console.error(`Query failed for ${areaCode}:`, error);
-          return { areaCode, items: [] };
-        })
-      );
+      // 배치 단위로 Query 수행 (Limit으로 데이터 양 제한하여 속도 향상)
+      // 24시간 기준 10분마다 저장하면 최대 144개, Limit: 100으로 충분한 샘플링
+      const BATCH_SIZE = 100; // 병렬 처리 최대화
+      const results = [];
+      const totalBatches = Math.ceil(targetAreaCodes.length / BATCH_SIZE);
       
-      // 모든 Query 결과를 병렬로 기다림
-      const results = await Promise.all(queryPromises);
+      console.log(`📊 총 ${targetAreaCodes.length}개 areaCode를 ${totalBatches}개 배치로 처리 시작 (Limit: 100)`);
+      
+      for (let i = 0; i < targetAreaCodes.length; i += BATCH_SIZE) {
+        const batchNum = Math.floor(i / BATCH_SIZE) + 1;
+        const batch = targetAreaCodes.slice(i, i + BATCH_SIZE);
+        const batchStartTime = Date.now();
+        
+        console.log(`🔄 배치 ${batchNum}/${totalBatches} 처리 중 (${batch.length}개 areaCode)...`);
+        
+        const batchPromises = batch.map(areaCode => 
+          dynamoClient.send(new QueryCommand({
+            TableName: TABLE_NAME,
+            KeyConditionExpression: 'areaCode = :areaCode AND #ts >= :startTime',
+            ExpressionAttributeNames: {
+              '#ts': 'timestamp'
+            },
+            ExpressionAttributeValues: {
+              ':areaCode': areaCode,
+              ':startTime': startTime
+            },
+            Limit: 100 // 평균 계산에 충분한 샘플 (24시간 기준 최대 144개)
+          })).then(result => ({
+            areaCode,
+            items: result.Items || []
+          })).catch(error => {
+            console.error(`Query failed for ${areaCode}:`, error);
+            return { areaCode, items: [] };
+          })
+        );
+        
+        const batchResults = await Promise.all(batchPromises);
+        const batchDuration = Date.now() - batchStartTime;
+        const itemsCount = batchResults.reduce((sum, r) => sum + r.items.length, 0);
+        console.log(`✅ 배치 ${batchNum}/${totalBatches} 완료 (${batchDuration}ms, ${itemsCount}개 아이템)`);
+        
+        results.push(...batchResults);
+      }
+      
+      console.log(`📊 모든 배치 처리 완료. 총 ${results.length}개 결과 수집`);
       
       // areaCode별로 그룹화 및 집계
       const grouped = {};
