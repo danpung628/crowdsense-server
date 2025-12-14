@@ -138,3 +138,4 @@ VITE_API_BASE_URL=https://dz5uco59sqbhv.cloudfront.net
 1. Service Worker 문제 해결
 2. API Gateway CORS 설정 확인
 3. 필요시 CloudFront에 API Gateway Origin 추가
+

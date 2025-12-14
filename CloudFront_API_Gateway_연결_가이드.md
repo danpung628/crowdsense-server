@@ -52,3 +52,4 @@
 - CloudFront 설정 변경은 배포에 몇 분이 걸릴 수 있음
 - 설정 변경 후 CloudFront 캐시 무효화 필요할 수 있음
 - Function Association은 Lambda@Edge 함수 연결용이므로 이번 작업에서는 불필요
+
