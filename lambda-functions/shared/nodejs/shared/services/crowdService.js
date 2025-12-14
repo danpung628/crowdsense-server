@@ -175,7 +175,7 @@ class CrowdService {
       const batch = toFetch.slice(i, i + batchSize);
       const fetchPromises = batch.map(async (areaCode) => {
         try {
-          const fresh = await this.fetchAndCacheOne(areaCode);
+          const fresh = await this.fetchAndCacheOne(areaCode, true); // DynamoDB 히스토리 저장 활성화
           return fresh;
         } catch (e) {
           return { 

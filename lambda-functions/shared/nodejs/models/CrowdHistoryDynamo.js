@@ -106,12 +106,12 @@ class CrowdHistoryDynamo {
         
         const batchPromises = batch.map(areaCode => 
           dynamoClient.send(new QueryCommand({
-            TableName: TABLE_NAME,
+        TableName: TABLE_NAME,
             KeyConditionExpression: 'areaCode = :areaCode AND #ts >= :startTime',
-            ExpressionAttributeNames: {
-              '#ts': 'timestamp'
-            },
-            ExpressionAttributeValues: {
+        ExpressionAttributeNames: {
+          '#ts': 'timestamp'
+        },
+        ExpressionAttributeValues: {
               ':areaCode': areaCode,
               ':startTime': startTime
             },
@@ -166,13 +166,13 @@ class CrowdHistoryDynamo {
       const rankings = Object.values(grouped)
         .filter(group => group.peopleCounts.length > 0) // 데이터가 있는 것만
         .map(group => ({
-          areaCode: group.areaCode,
-          areaName: group.areaName,
-          category: group.category,
-          avgPeople: Math.round(group.peopleCounts.reduce((a, b) => a + b, 0) / group.peopleCounts.length),
-          maxPeople: Math.max(...group.peopleCounts),
-          avgCongestion: Math.round((group.congestionLevels.reduce((a, b) => a + b, 0) / group.congestionLevels.length) * 10) / 10
-        }));
+        areaCode: group.areaCode,
+        areaName: group.areaName,
+        category: group.category,
+        avgPeople: Math.round(group.peopleCounts.reduce((a, b) => a + b, 0) / group.peopleCounts.length),
+        maxPeople: Math.max(...group.peopleCounts),
+        avgCongestion: Math.round((group.congestionLevels.reduce((a, b) => a + b, 0) / group.congestionLevels.length) * 10) / 10
+      }));
 
       // 평균 인구수 기준 내림차순 정렬
       rankings.sort((a, b) => b.avgPeople - a.avgPeople);

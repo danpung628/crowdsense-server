@@ -62,16 +62,16 @@ async function networkFirstStrategy(request) {
     const networkResponse = await fetch(request);
     // GET 요청만 캐시 (POST, PUT, DELETE 등은 캐시하지 않음)
     if (request.method === 'GET') {
-      const cache = await caches.open(DYNAMIC_CACHE);
-      cache.put(request, networkResponse.clone());
+    const cache = await caches.open(DYNAMIC_CACHE);
+    cache.put(request, networkResponse.clone());
     }
     return networkResponse;
   } catch (error) {
     // GET 요청만 캐시에서 찾기
     if (request.method === 'GET') {
-      const cachedResponse = await caches.match(request);
-      if (cachedResponse) {
-        return cachedResponse;
+    const cachedResponse = await caches.match(request);
+    if (cachedResponse) {
+      return cachedResponse;
       }
     }
     throw error;
@@ -82,9 +82,9 @@ async function networkFirstStrategy(request) {
 async function cacheFirstStrategy(request) {
   // GET 요청만 캐시에서 찾기
   if (request.method === 'GET') {
-    const cachedResponse = await caches.match(request);
-    if (cachedResponse) {
-      return cachedResponse;
+  const cachedResponse = await caches.match(request);
+  if (cachedResponse) {
+    return cachedResponse;
     }
   }
 
@@ -92,8 +92,8 @@ async function cacheFirstStrategy(request) {
     const networkResponse = await fetch(request);
     // GET 요청만 캐시에 저장
     if (request.method === 'GET') {
-      const cache = await caches.open(STATIC_CACHE);
-      cache.put(request, networkResponse.clone());
+    const cache = await caches.open(STATIC_CACHE);
+    cache.put(request, networkResponse.clone());
     }
     return networkResponse;
   } catch (error) {
