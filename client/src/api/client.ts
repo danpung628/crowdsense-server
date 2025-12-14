@@ -4,17 +4,19 @@ import axios from 'axios';
 // Vite는 import.meta.env를 사용하여 환경 변수에 접근
 // VITE_ 접두사가 붙은 변수만 클라이언트에서 접근 가능
 const getApiBaseUrl = (): string => {
-  // 환경 변수가 설정되어 있으면 사용, 없으면 기본값 (개발 환경)
-  const baseUrl = import.meta.env.VITE_API_BASE_URL;
+  // 프로덕션: CloudFront 사용 (HTTPS이므로 CORS 문제 해결, 캐시 비활성화로 즉시 반영)
+  if (import.meta.env.PROD) {
+    return 'https://dz5uco59sqbhv.cloudfront.net';
+  }
   
+  // 환경 변수가 설정되어 있으면 사용 (개발 환경)
+  const baseUrl = import.meta.env.VITE_API_BASE_URL;
   if (baseUrl) {
     // Base URL에서 끝의 /api 제거 (인터셉터에서 자동 추가)
-    // 예: https://...amazonaws.com/prod/api -> https://...amazonaws.com/prod
     return baseUrl.replace(/\/api\/?$/, '');
   }
   
   // 기본값: 개발 환경 (로컬 Express 서버)
-  // 인터셉터에서 /api를 추가하므로 여기서는 /api 없이
   return 'http://localhost:3000';
 };
 
