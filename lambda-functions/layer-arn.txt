@@ -1,0 +1,1 @@
+﻿arn:aws:lambda:ap-northeast-2:099733535568:layer:crowdsense-shared:1

@@ -1,6 +1,6 @@
-const CACHE_NAME = 'crowdsense-v2';
-const STATIC_CACHE = 'crowdsense-static-v2';
-const DYNAMIC_CACHE = 'crowdsense-dynamic-v2';
+const CACHE_NAME = 'crowdsense-v4';
+const STATIC_CACHE = 'crowdsense-static-v4';
+const DYNAMIC_CACHE = 'crowdsense-dynamic-v4';
 
 // 설치 시 캐시할 파일들
 const STATIC_FILES = [

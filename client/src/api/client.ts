@@ -23,7 +23,7 @@ const getApiBaseUrl = (): string => {
 // API 클라이언트 설정
 export const apiClient = axios.create({
   baseURL: getApiBaseUrl(),
-  timeout: 15000, // 15초로 감소 (너무 오래 기다리지 않도록)
+  timeout: 30000, // 30초로 증가 (Lambda 함수 성능 이슈 대응)
   headers: {
     'Content-Type': 'application/json',
   },
@@ -47,21 +47,38 @@ apiClient.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
     
-    // Auth API는 /auth-* 형태, Data API는 /api/* 형태
-    // Base URL에 이미 /api가 포함되어 있으므로, Auth API가 아닌 경우 /api를 추가
+    // Auth API는 /auth-* 형태, Data API는 CloudFront Cache Behavior 패턴에 맞춤
+    // CloudFront: /crowd-*, /subway-*, /parking-*, /area-* 패턴 사용
     if (config.url) {
-      // Auth API가 아니고, 이미 /api로 시작하지 않으면 추가
-      if (!config.url.startsWith('/auth-') && !config.url.startsWith('/api/')) {
-        // URL이 /로 시작하면 /api를 앞에 추가, 아니면 /api/를 앞에 추가
-        if (config.url.startsWith('/')) {
-          config.url = '/api' + config.url;
+      const originalUrl = config.url;
+      // Auth API가 아니고, 이미 패턴으로 시작하지 않으면 변환
+      if (!config.url.startsWith('/auth-') && 
+          !config.url.startsWith('/crowd-') && 
+          !config.url.startsWith('/subway-') && 
+          !config.url.startsWith('/parking-') &&
+          !config.url.startsWith('/area-') &&
+          !config.url.startsWith('/api/')) {
+        // URL 패턴에 따라 변환
+        // CloudFront /api/* Cache Behavior 사용, 실제 API 경로는 /prod/api/crowds
+        if (config.url.startsWith('/crowds')) {
+          config.url = '/api' + config.url; // /crowds -> /api/crowds
+        } else if (config.url.startsWith('/subway')) {
+          config.url = '/api' + config.url; // /subway -> /api/subway
+        } else if (config.url.startsWith('/parking')) {
+          config.url = '/api' + config.url; // /parking -> /api/parking
+        } else if (config.url.startsWith('/areas')) {
+          config.url = '/api' + config.url; // /areas -> /api/areas
         } else {
-          config.url = '/api/' + config.url;
+          // 기타는 /api 추가 (rankings 등)
+          if (config.url.startsWith('/')) {
+            config.url = '/api' + config.url;
+          } else {
+            config.url = '/api/' + config.url;
+          }
         }
       }
+      console.log(`🚀 API 요청: ${config.method?.toUpperCase()} ${originalUrl} -> ${config.url} (baseURL: ${config.baseURL})`);
     }
-    
-    console.log(`🚀 API 요청: ${config.method?.toUpperCase()} ${config.url}`);
     return config;
   },
   (error) => {
@@ -72,6 +89,26 @@ apiClient.interceptors.request.use(
 
 // 응답 인터셉터 함수
 const responseSuccessHandler = (response: any) => {
+  // API Gateway가 Lambda 응답을 래핑한 경우 처리
+  // 구조: {statusCode, headers, body: "..."} 또는 직접 Lambda 응답
+  if (response.data && typeof response.data === 'object') {
+    // API Gateway 래퍼 구조인지 확인
+    if (response.data.statusCode && response.data.body) {
+      try {
+        // body가 문자열 JSON이면 파싱
+        const body = typeof response.data.body === 'string' 
+          ? JSON.parse(response.data.body) 
+          : response.data.body;
+        
+        // 파싱된 body를 response.data로 교체
+        response.data = body;
+      } catch (e) {
+        console.warn('⚠️ API Gateway body 파싱 실패:', e);
+        // 파싱 실패 시 원본 유지
+      }
+    }
+  }
+  
   console.log(`✅ API 응답 성공: ${response.config.url}`, response.data);
   return response;
 };
