@@ -174,17 +174,17 @@ class CrowdService {
     for (let i = 0; i < toFetch.length; i += batchSize) {
       const batch = toFetch.slice(i, i + batchSize);
       const fetchPromises = batch.map(async (areaCode) => {
-        try {
-          const fresh = await this.fetchAndCacheOne(areaCode);
+      try {
+        const fresh = await this.fetchAndCacheOne(areaCode);
           return fresh;
-        } catch (e) {
+      } catch (e) {
           return { 
-            areaCode,
-            error: e.message,
-            areaInfo: areaMapping.getAreaByCode(areaCode) || null
+          areaCode,
+          error: e.message,
+          areaInfo: areaMapping.getAreaByCode(areaCode) || null
           };
         }
-      });
+        });
       
       const batchResults = await Promise.all(fetchPromises);
       results.push(...batchResults);

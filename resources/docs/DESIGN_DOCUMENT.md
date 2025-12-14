@@ -92,10 +92,10 @@
 #### User 테이블
 - **Partition Key**: `id` (String)
 - **속성**:
-  - `id`: String (unique, required, indexed)
-  - `password`: String (hashed, required)
-  - `accessToken`: String
-  - `refreshToken`: String
+- `id`: String (unique, required, indexed)
+- `password`: String (hashed, required)
+- `accessToken`: String
+- `refreshToken`: String
   - `createdAt`: Number (Unix timestamp in milliseconds, indexed)
   - `updatedAt`: Number (Unix timestamp in milliseconds)
 
@@ -103,12 +103,12 @@
 - **Partition Key**: `areaCode` (String)
 - **Sort Key**: `timestamp` (Number, Unix timestamp in milliseconds)
 - **속성**:
-  - `areaCode`: String (required, indexed)
+- `areaCode`: String (required, indexed)
   - `timestamp`: Number (required, indexed, TTL: 30일)
-  - `areaName`: String (required)
-  - `category`: String (required)
-  - `peopleCount`: Number (default: 0)
-  - `congestionLevel`: Number (min: 1, max: 5, default: 3)
+- `areaName`: String (required)
+- `category`: String (required)
+- `peopleCount`: Number (default: 0)
+- `congestionLevel`: Number (min: 1, max: 5, default: 3)
   - `rawData`: Object (optional)
 
 **인덱스 전략**:

@@ -105,13 +105,13 @@ class SubwayService {
     for (let i = 0; i < toFetch.length; i += batchSize) {
       const batch = toFetch.slice(i, i + batchSize);
       const fetchPromises = batch.map(async (areaCode) => {
-        try {
-          const fresh = await this.fetchAndCacheOne(areaCode);
+      try {
+        const fresh = await this.fetchAndCacheOne(areaCode);
           return fresh;
-        } catch (e) {
+      } catch (e) {
           // 에러 발생 시 null 반환 (결과에 포함하지 않음)
           return null;
-        }
+      }
       });
       
       const batchResults = await Promise.all(fetchPromises);

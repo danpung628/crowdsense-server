@@ -71,7 +71,7 @@ apiClient.interceptors.request.use(
         } else {
           // 기타는 /api 추가 (rankings 등)
           if (config.url.startsWith('/')) {
-            config.url = '/api' + config.url;
+        config.url = '/api' + config.url;
           } else {
             config.url = '/api/' + config.url;
           }
@@ -212,7 +212,7 @@ fastApiClient.interceptors.request.use(
       if (!config.url.startsWith('/auth-') && !config.url.startsWith('/api/')) {
         // URL이 /로 시작하면 /api를 앞에 추가, 아니면 /api/를 앞에 추가
         if (config.url.startsWith('/')) {
-          config.url = '/api' + config.url;
+        config.url = '/api' + config.url;
         } else {
           config.url = '/api/' + config.url;
         }
