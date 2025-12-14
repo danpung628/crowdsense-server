@@ -38,19 +38,19 @@ if (Test-Path nodejs) {
     Write-Host "  ✓ 기존 nodejs 폴더 삭제" -ForegroundColor Green
 }
 
-# nodejs 폴더 생성
-mkdir nodejs | Out-Null
-Write-Host "  ✓ nodejs 폴더 생성" -ForegroundColor Green
+# nodejs/shared 폴더 구조 생성
+mkdir nodejs\shared | Out-Null
+Write-Host "  ✓ nodejs/shared 폴더 생성" -ForegroundColor Green
 
-# 파일 복사
-Copy-Item -Recurse utils,services,models,middlewares,data nodejs/ -ErrorAction SilentlyContinue
+# 파일 복사 (nodejs/shared/ 구조로)
+Copy-Item -Recurse utils,services,models,middlewares,data nodejs\shared\ -ErrorAction SilentlyContinue
 if (Test-Path areacode.csv) {
-    Copy-Item areacode.csv nodejs/
+    Copy-Item areacode.csv nodejs\shared\
 }
-Write-Host "  ✓ 파일 복사 완료" -ForegroundColor Green
+Write-Host "  ✓ 파일 복사 완료 (nodejs/shared/ 구조)" -ForegroundColor Green
 
 # 의존성 설치
-Set-Location nodejs
+Set-Location nodejs\shared
 if (-not (Test-Path package.json)) {
     Write-Host "  📝 package.json 생성 중..." -ForegroundColor Yellow
     @{
@@ -70,7 +70,7 @@ npm install --production --silent | Out-Null
 Write-Host "  ✓ 의존성 설치 완료" -ForegroundColor Green
 
 # ZIP 생성
-Set-Location ..
+Set-Location ..\..
 $zipPath = Join-Path $projectRoot "lambda-functions\shared-layer.zip"
 if (Test-Path $zipPath) {
     Remove-Item $zipPath
@@ -87,7 +87,7 @@ Write-Host "`n🚀 Lambda Layer 배포 중..." -ForegroundColor Cyan
 Write-Host "   리전: $region" -ForegroundColor Yellow
 Write-Host "   Layer 이름: crowdsense-shared" -ForegroundColor Yellow
 
-$description = "CrowdSense 공통 코드 Layer (DynamoDB 히스토리 저장 활성화)"
+$description = "CrowdSense 공통 코드 Layer (올바른 구조: nodejs/shared/, DynamoDB 히스토리 저장 활성화)"
 
 try {
     $result = aws lambda publish-layer-version `
