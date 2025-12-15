@@ -1,0 +1,78 @@
+{
+  "DistributionConfig": {
+    "CallerReference": "cli-1765624047-237632",
+    "DefaultRootObject": "index.html",
+    "Origins": {
+      "Quantity": 2,
+      "Items": [
+        {
+          "Id": "crowdsense-web-20251213095230.s3.ap-northeast-2.amazonaws.com-1765624047-288751",
+          "DomainName": "crowdsense-web-20251213095230.s3.ap-northeast-2.amazonaws.com",
+          "S3OriginConfig": {}
+        },
+        {
+          "Id": "cntfsdk0vc.execute-api.ap-southeast-2.amazonaws.com",
+          "DomainName": "cntfsdk0vc.execute-api.ap-southeast-2.amazonaws.com",
+          "OriginPath": "/prod",
+          "CustomOriginConfig": {
+            "HTTPPort": 80,
+            "HTTPSPort": 443,
+            "OriginProtocolPolicy": "https-only",
+            "OriginSslProtocols": {
+              "Quantity": 1,
+              "Items": ["TLSv1.2"]
+            }
+          }
+        }
+      ]
+    },
+    "DefaultCacheBehavior": {
+      "TargetOriginId": "crowdsense-web-20251213095230.s3.ap-northeast-2.amazonaws.com-1765624047-288751",
+      "ViewerProtocolPolicy": "allow-all",
+      "AllowedMethods": {
+        "Quantity": 2,
+        "Items": ["HEAD", "GET"],
+        "CachedMethods": {
+          "Quantity": 2,
+          "Items": ["HEAD", "GET"]
+        }
+      },
+      "ForwardedValues": {
+        "QueryString": false,
+        "Cookies": {
+          "Forward": "none"
+        }
+      },
+      "MinTTL": 0,
+      "DefaultTTL": 86400,
+      "MaxTTL": 31536000,
+      "Compress": false
+    },
+    "CacheBehaviors": {
+      "Quantity": 1,
+      "Items": [
+        {
+          "PathPattern": "/api/*",
+          "TargetOriginId": "cntfsdk0vc.execute-api.ap-southeast-2.amazonaws.com",
+          "ViewerProtocolPolicy": "redirect-to-https",
+          "AllowedMethods": {
+            "Quantity": 7,
+            "Items": ["HEAD", "DELETE", "POST", "GET", "OPTIONS", "PUT", "PATCH"],
+            "CachedMethods": {
+              "Quantity": 2,
+              "Items": ["HEAD", "GET"]
+            }
+          },
+          "Compress": true,
+          "CachePolicyId": "4135ea2d-6df8-44a3-9df3-4b5a84be39ad",
+          "OriginRequestPolicyId": "b689b0a8-53d0-40ab-baf2-68738e2966ac"
+        }
+      ]
+    },
+    "Enabled": true,
+    "PriceClass": "PriceClass_All",
+    "ViewerCertificate": {
+      "CloudFrontDefaultCertificate": true
+    }
+  }
+}

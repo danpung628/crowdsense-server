@@ -174,17 +174,17 @@ class CrowdService {
     for (let i = 0; i < toFetch.length; i += batchSize) {
       const batch = toFetch.slice(i, i + batchSize);
       const fetchPromises = batch.map(async (areaCode) => {
-      try {
+        try {
           const fresh = await this.fetchAndCacheOne(areaCode, true); // DynamoDB 히스토리 저장 활성화
           return fresh;
-      } catch (e) {
+        } catch (e) {
           return { 
-          areaCode,
-          error: e.message,
-          areaInfo: areaMapping.getAreaByCode(areaCode) || null
+            areaCode,
+            error: e.message,
+            areaInfo: areaMapping.getAreaByCode(areaCode) || null
           };
         }
-        });
+      });
       
       const batchResults = await Promise.all(fetchPromises);
       results.push(...batchResults);

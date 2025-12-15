@@ -1,0 +1,12 @@
+[
+  {
+    "op": "replace",
+    "path": "/authorizationType",
+    "value": "CUSTOM"
+  },
+  {
+    "op": "replace",
+    "path": "/authorizerId",
+    "value": "uoo0u1"
+  }
+]
