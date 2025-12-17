@@ -138,6 +138,31 @@ class CrowdService {
   }
 
   /**
+   * rawData에서 실제 혼잡도 레벨 정보 추출
+   */
+  extractCongestionInfo(rawData) {
+    try {
+      if (!rawData || typeof rawData !== 'object') {
+        return null;
+      }
+      
+      const ppltnArray = rawData?.['SeoulRtd.citydata_ppltn'];
+      if (!ppltnArray || !Array.isArray(ppltnArray) || ppltnArray.length === 0) {
+        return null;
+      }
+      
+      const cityData = ppltnArray[0];
+      return {
+        level: cityData?.AREA_CONGEST_LVL || null,
+        message: cityData?.AREA_CONGEST_MSG || null
+      };
+    } catch (error) {
+      console.error('혼잡도 정보 추출 실패:', error);
+      return null;
+    }
+  }
+
+  /**
    * 전체 인구 데이터 조회 (병렬 처리 최적화)
    */
   async getCrowdData() {
@@ -174,17 +199,17 @@ class CrowdService {
     for (let i = 0; i < toFetch.length; i += batchSize) {
       const batch = toFetch.slice(i, i + batchSize);
       const fetchPromises = batch.map(async (areaCode) => {
-      try {
+        try {
           const fresh = await this.fetchAndCacheOne(areaCode, true); // DynamoDB 히스토리 저장 활성화
           return fresh;
-      } catch (e) {
+        } catch (e) {
           return { 
-          areaCode,
-          error: e.message,
-          areaInfo: areaMapping.getAreaByCode(areaCode) || null
+            areaCode,
+            error: e.message,
+            areaInfo: areaMapping.getAreaByCode(areaCode) || null
           };
         }
-        });
+      });
       
       const batchResults = await Promise.all(fetchPromises);
       results.push(...batchResults);
@@ -211,31 +236,6 @@ class CrowdService {
     }
     
     return await this.fetchAndCacheOne(areaCode);
-  }
-
-  /**
-   * rawData에서 실제 혼잡도 레벨 정보 추출
-   */
-  extractCongestionInfo(rawData) {
-    try {
-      if (!rawData || typeof rawData !== 'object') {
-        return null;
-      }
-      
-      const ppltnArray = rawData?.['SeoulRtd.citydata_ppltn'];
-      if (!ppltnArray || !Array.isArray(ppltnArray) || ppltnArray.length === 0) {
-        return null;
-      }
-      
-      const cityData = ppltnArray[0];
-      return {
-        level: cityData?.AREA_CONGEST_LVL || null,
-        message: cityData?.AREA_CONGEST_MSG || null
-      };
-    } catch (error) {
-      console.error('혼잡도 정보 추출 실패:', error);
-      return null;
-    }
   }
 
   /**
