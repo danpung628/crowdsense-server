@@ -11,6 +11,7 @@ const SEOUL_DISTRICTS = [
 
 function Parking() {
   const [parkingLots, setParkingLots] = useState<ParkingLot[]>([]);
+  const [allParkingLots, setAllParkingLots] = useState<ParkingLot[]>([]); // 원본 데이터 저장
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -36,6 +37,7 @@ function Parking() {
       const data = await parkingApi.getAll();
       console.log('✅ 주차장 데이터 수신:', data);
       
+      setAllParkingLots(data); // 원본 데이터 저장
       setParkingLots(data);
       setLoading(false);
     } catch (err) {
@@ -48,11 +50,13 @@ function Parking() {
 
   const handleSearch = () => {
     if (!searchQuery.trim()) {
-      fetchParkingData();
+      // 검색어가 비어있으면 원본 데이터로 복원
+      setParkingLots(allParkingLots);
       return;
     }
 
-    const filtered = parkingLots.filter(lot =>
+    // 항상 원본 데이터(allParkingLots)에서 검색
+    const filtered = allParkingLots.filter(lot =>
       lot.district.includes(searchQuery) ||
       lot.address.includes(searchQuery)
     );
@@ -77,6 +81,7 @@ function Parking() {
       const data = await parkingApi.getByDistrict(district);
       console.log('✅ 구별 주차장 데이터 수신:', data);
       
+      setAllParkingLots(data); // 구별 데이터도 원본으로 저장
       setParkingLots(data);
       setLoading(false);
     } catch (err) {
@@ -96,55 +101,92 @@ function Parking() {
     setNearbyLoading(true);
     setNearbyError(null);
 
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        try {
-          const { latitude, longitude } = position.coords;
-          console.log(`📍 현재 위치: ${latitude}, ${longitude}`);
-          console.log(`🔍 반경 ${selectedRadius}km 내 주차장 검색 중...`);
+    // 위치 정보 가져오기 헬퍼 함수
+    const getLocation = (options: PositionOptions): Promise<GeolocationPosition> => {
+      return new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, options);
+      });
+    };
 
-          const data = await parkingApi.getNearby(
-            latitude,
-            longitude,
-            selectedRadius * 1000 // km를 m로 변환
-          );
+    try {
+      let position: GeolocationPosition;
+      
+      // 1단계: 빠른 위치 정보 시도 (네트워크 기반, enableHighAccuracy: false)
+      try {
+        console.log('📍 빠른 위치 정보 시도 중...');
+        position = await getLocation({
+          enableHighAccuracy: false, // 네트워크 기반 위치 (빠름)
+          timeout: 5000, // 5초 타임아웃
+          maximumAge: 60000 // 1분 이내 캐시 사용
+        });
+        console.log('✅ 빠른 위치 정보 획득 성공');
+      } catch (fastError) {
+        // 2단계: 빠른 방법 실패 시 고정밀도 GPS 시도
+        console.log('⚠️ 빠른 위치 정보 실패, 고정밀도 GPS 시도 중...');
+        try {
+          position = await getLocation({
+            enableHighAccuracy: true, // GPS 사용 (느리지만 정확)
+            timeout: 15000, // 15초 타임아웃
+            maximumAge: 0 // 캐시 사용 안 함
+          });
+          console.log('✅ 고정밀도 GPS 위치 정보 획득 성공');
+        } catch (gpsError) {
+          // 두 방법 모두 실패
+          const error = gpsError as GeolocationPositionError;
+          let errorMessage = '위치 정보를 가져올 수 없습니다.';
           
-          console.log('✅ 근처 주차장 데이터 수신:', data);
-          setParkingLots(data);
-          setShowNearbyResults(true);
+          switch (error.code) {
+            case error.PERMISSION_DENIED:
+              errorMessage = '위치 권한이 거부되었습니다. 브라우저 설정에서 위치 권한을 허용해주세요.';
+              break;
+            case error.POSITION_UNAVAILABLE:
+              errorMessage = '위치 정보를 사용할 수 없습니다.';
+              break;
+            case error.TIMEOUT:
+              errorMessage = '위치 정보 요청 시간이 초과되었습니다. 인터넷 연결과 GPS 신호를 확인해주세요.';
+              break;
+          }
+          
+          setNearbyError(errorMessage);
           setNearbyLoading(false);
-        } catch (err) {
-          const error = err as Error;
-          console.error('❌ 근처 주차장 검색 실패:', error);
-          setNearbyError(error.message || '주차장을 찾을 수 없습니다.');
-          setNearbyLoading(false);
+          return;
         }
-      },
-      (err) => {
-        console.error('❌ 위치 정보 가져오기 실패:', err);
-        
-        let errorMessage = '위치 정보를 가져올 수 없습니다.';
-        switch (err.code) {
-          case err.PERMISSION_DENIED:
-            errorMessage = '위치 권한이 거부되었습니다. 브라우저 설정에서 위치 권한을 허용해주세요.';
-            break;
-          case err.POSITION_UNAVAILABLE:
-            errorMessage = '위치 정보를 사용할 수 없습니다.';
-            break;
-          case err.TIMEOUT:
-            errorMessage = '위치 정보 요청 시간이 초과되었습니다.';
-            break;
-        }
-        
-        setNearbyError(errorMessage);
-        setNearbyLoading(false);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0
       }
-    );
+
+      // 위치 정보 획득 성공 - 주차장 검색 진행
+      const { latitude, longitude } = position.coords;
+      
+      // 위치 정보 정규화 (소수점 6자리로 제한하여 일관성 확보)
+      const normalizedLat = Math.round(latitude * 1000000) / 1000000;
+      const normalizedLng = Math.round(longitude * 1000000) / 1000000;
+      
+      console.log(`📍 현재 위치: ${normalizedLat}, ${normalizedLng} (정규화됨)`);
+      console.log(`🔍 반경 ${selectedRadius}km 내 주차장 검색 중...`);
+
+      const data = await parkingApi.getNearby(
+        normalizedLat,
+        normalizedLng,
+        selectedRadius // km 단위로 전달
+      );
+      
+      // 거리 기준으로 정렬하여 일관성 확보 (거리가 있는 경우만)
+      const sortedData = [...data].sort((a, b) => {
+        const distA = a.distance ?? Infinity;
+        const distB = b.distance ?? Infinity;
+        return distA - distB;
+      });
+      
+      console.log('✅ 근처 주차장 데이터 수신:', sortedData.length, '개');
+      setAllParkingLots(sortedData); // 근처 주차장 데이터도 원본으로 저장
+      setParkingLots(sortedData);
+      setShowNearbyResults(true);
+      setNearbyLoading(false);
+    } catch (err) {
+      const error = err as Error;
+      console.error('❌ 근처 주차장 검색 실패:', error);
+      setNearbyError(error.message || '주차장을 찾을 수 없습니다.');
+      setNearbyLoading(false);
+    }
   };
 
   const getAvailabilityColor = (available: number, total: number) => {
@@ -153,6 +195,20 @@ function Parking() {
     if (ratio >= 0.5) return 'text-green-600 bg-green-50';
     if (ratio >= 0.2) return 'text-yellow-600 bg-yellow-50';
     return 'text-red-600 bg-red-50';
+  };
+
+  // 운영시간 포맷팅 (이미 services.ts에서 포맷팅되지만, 혹시 모를 경우를 대비)
+  const formatOperatingTimeString = (operatingTime: string): string => {
+    if (!operatingTime) return '정보 없음';
+    
+    // 이미 콜론이 있으면 그대로 반환, 없으면 포맷팅
+    if (operatingTime.includes(':')) {
+      return operatingTime;
+    }
+    
+    // "평일 0000-2400, 주말 0000-2400, 공휴일 0000-2400" 형식 처리
+    return operatingTime
+      .replace(/(\d{2})(\d{2})-(\d{2})(\d{2})/g, '$1:$2-$3:$4');
   };
 
   if (loading) {
@@ -239,7 +295,7 @@ function Parking() {
               <button
                 onClick={() => {
                   setSearchQuery('');
-                  fetchParkingData();
+                  setParkingLots(allParkingLots); // 원본 데이터로 복원
                 }}
                 className="bg-gray-500 hover:bg-gray-600 text-white font-semibold px-4 py-2 rounded-lg transition duration-200"
               >
@@ -401,7 +457,7 @@ function Parking() {
                   </div>
 
                   <div className="text-xs text-gray-500 pt-1">
-                    운영시간: {lot.operatingTime || '정보 없음'}
+                    운영시간: {formatOperatingTimeString(lot.operatingTime || '')}
                   </div>
                   
                   {lot.updatedAt && (

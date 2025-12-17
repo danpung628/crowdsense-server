@@ -81,18 +81,53 @@ export const subwayApi = {
 };
 
 // 주차장 API
+// 운영시간 포맷팅 헬퍼 함수: "0000-2400" -> "00:00-24:00"
+const formatTimeRange = (timeStr: string): string => {
+  if (!timeStr) return '';
+  // "0000-2400" 형식을 "00:00-24:00"로 변환
+  return timeStr.replace(/(\d{2})(\d{2})-(\d{2})(\d{2})/g, '$1:$2-$3:$4');
+};
+
 export const parkingApi = {
   // 전체 주차장 조회
   getAll: async (): Promise<ParkingLot[]> => {
-    const response = await apiClient.get('/parking');
+    const response = await apiClient.get('/parking', {
+      params: { limit: 1000 } // 충분히 큰 값으로 설정 (서울시 공영주차장 전체 조회)
+    });
     
-    // 응답 구조: { success, data: { items: [], pagination: {} } }
-    const responseData = response.data.data || response.data;
-    const items = responseData.items || responseData;
+    // 응답 구조: { success: true, data: { items: [], pagination: {} } }
+    console.log('🔍 Parking API 원본 응답:', response.data);
     
-    // 배열이 아니면 빈 배열 반환
-    if (!Array.isArray(items)) {
-      console.warn('⚠️ Parking API 응답이 배열이 아닙니다:', items);
+    let items: any[] = [];
+    
+    // 1. response.data.data가 있고 items 속성이 있는 경우
+    if (response.data?.data?.items && Array.isArray(response.data.data.items)) {
+      items = response.data.data.items;
+    }
+    // 2. response.data.data가 배열인 경우
+    else if (Array.isArray(response.data?.data)) {
+      items = response.data.data;
+    }
+    // 3. response.data가 배열인 경우
+    else if (Array.isArray(response.data)) {
+      items = response.data;
+    }
+    // 4. response.data.data.items가 없는 경우, data 자체를 확인
+    else if (response.data?.data && typeof response.data.data === 'object') {
+      const data = response.data.data;
+      if (data.items && Array.isArray(data.items)) {
+        items = data.items;
+      } else if (Array.isArray(data)) {
+        items = data;
+      }
+    }
+    
+    if (!Array.isArray(items) || items.length === 0) {
+      console.warn('⚠️ Parking API 응답에서 배열을 찾을 수 없습니다:', {
+        'response.data': response.data,
+        'response.data.data': response.data?.data,
+        'items': items
+      });
       return [];
     }
     
@@ -110,7 +145,7 @@ export const parkingApi = {
         : `기본 ${basicFee.toLocaleString()}원/${basicTime || 30}분, 추가 ${addFee.toLocaleString()}원/${addTime || 10}분${dayMax ? `, 일최대 ${dayMax.toLocaleString()}원` : ''}`;
 
       const operatingTime = p.operatingHours
-        ? `평일 ${p.operatingHours.weekday || ''}, 주말 ${p.operatingHours.weekend || ''}, 공휴일 ${p.operatingHours.holiday || ''}`
+        ? `평일 ${formatTimeRange(p.operatingHours.weekday || '')}, 주말 ${formatTimeRange(p.operatingHours.weekend || '')}, 공휴일 ${formatTimeRange(p.operatingHours.holiday || '')}`
         : '';
 
       return {
@@ -161,7 +196,7 @@ export const parkingApi = {
         : `기본 ${basicFee.toLocaleString()}원/${basicTime || 30}분, 추가 ${addFee.toLocaleString()}원/${addTime || 10}분${dayMax ? `, 일최대 ${dayMax.toLocaleString()}원` : ''}`;
 
       const operatingTime = p.operatingHours
-        ? `평일 ${p.operatingHours.weekday || ''}, 주말 ${p.operatingHours.weekend || ''}, 공휴일 ${p.operatingHours.holiday || ''}`
+        ? `평일 ${formatTimeRange(p.operatingHours.weekday || '')}, 주말 ${formatTimeRange(p.operatingHours.weekend || '')}, 공휴일 ${formatTimeRange(p.operatingHours.holiday || '')}`
         : '';
 
       return {
@@ -198,7 +233,7 @@ export const parkingApi = {
         : `기본 ${basicFee.toLocaleString()}원/${basicTime || 30}분, 추가 ${addFee.toLocaleString()}원/${addTime || 10}분${dayMax ? `, 일최대 ${dayMax.toLocaleString()}원` : ''}`;
 
       const operatingTime = p.operatingHours
-        ? `평일 ${p.operatingHours.weekday || ''}, 주말 ${p.operatingHours.weekend || ''}, 공휴일 ${p.operatingHours.holiday || ''}`
+        ? `평일 ${formatTimeRange(p.operatingHours.weekday || '')}, 주말 ${formatTimeRange(p.operatingHours.weekend || '')}, 공휴일 ${formatTimeRange(p.operatingHours.holiday || '')}`
         : '';
 
       return {
@@ -267,15 +302,16 @@ export const areaApi = {
   // 카테고리별 조회
   getByCategory: async (category: string): Promise<AreaInfo[]> => {
     const response = await apiClient.get(`/areas/category/${encodeURIComponent(category)}`);
-    // Lambda 응답: {success: true, data: [...], total: ...}
-    const results = response.data.data || response.data;
+    // Lambda 응답: {success: true, data: {items: [...], total: ...}}
+    const responseData = response.data.data || response.data;
+    const items = responseData.items || responseData;
     
-    if (!Array.isArray(results)) {
-      console.warn('⚠️ Category API 응답이 배열이 아닙니다:', results);
+    if (!Array.isArray(items)) {
+      console.warn('⚠️ Category API 응답이 배열이 아닙니다:', items);
       return [];
     }
     
-    return results;
+    return items;
   },
 
   // 검색
