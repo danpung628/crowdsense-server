@@ -138,6 +138,31 @@ class CrowdService {
   }
 
   /**
+   * rawData에서 실제 혼잡도 레벨 정보 추출
+   */
+  extractCongestionInfo(rawData) {
+    try {
+      if (!rawData || typeof rawData !== 'object') {
+        return null;
+      }
+      
+      const ppltnArray = rawData?.['SeoulRtd.citydata_ppltn'];
+      if (!ppltnArray || !Array.isArray(ppltnArray) || ppltnArray.length === 0) {
+        return null;
+      }
+      
+      const cityData = ppltnArray[0];
+      return {
+        level: cityData?.AREA_CONGEST_LVL || null,
+        message: cityData?.AREA_CONGEST_MSG || null
+      };
+    } catch (error) {
+      console.error('혼잡도 정보 추출 실패:', error);
+      return null;
+    }
+  }
+
+  /**
    * 전체 인구 데이터 조회 (병렬 처리 최적화)
    */
   async getCrowdData() {
@@ -222,12 +247,17 @@ class CrowdService {
     
     const history = await CrowdHistoryDynamo.findByAreaCode(areaCode, startTime, endTime);
 
-    // 시계열 데이터 변환
-    const timeseries = history.map(h => ({
-      timestamp: new Date(h.timestamp),
-      peopleCount: h.peopleCount,
-      congestionLevel: h.congestionLevel
-    }));
+    // 시계열 데이터 변환 (실제 혼잡도 정보 포함)
+    const timeseries = history.map(h => {
+      const congestionInfo = this.extractCongestionInfo(h.rawData);
+      return {
+        timestamp: new Date(h.timestamp),
+        peopleCount: h.peopleCount,
+        congestionLevel: h.congestionLevel, // 계산된 레벨 (호환성 유지)
+        actualCongestionLevel: congestionInfo?.level || null, // 실제 혼잡도 레벨
+        actualCongestionMessage: congestionInfo?.message || null // 실제 혼잡도 메시지
+      };
+    });
 
     // 통계 계산
     const peopleCounts = history.map(h => h.peopleCount);

@@ -1,0 +1,7 @@
+{
+  "Name": "crowdsense-s3-oac",
+  "Description": "OAC for CrowdSense S3 bucket",
+  "SigningProtocol": "sigv4",
+  "SigningBehavior": "always",
+  "OriginAccessControlOriginType": "s3"
+}

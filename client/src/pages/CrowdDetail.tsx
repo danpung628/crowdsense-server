@@ -266,10 +266,14 @@ function CrowdDetail() {
               <div 
                 className={`${getCongestionColor(level)} h-4 rounded-full absolute transition-all duration-300`}
                 style={{ 
-                  width: level === '여유' ? '20%' : 
+                  width: level === '한산' ? '20%' :
+                         level === '여유' ? '20%' : 
                          level === '보통' ? '40%' : 
+                         level === '혼잡' ? '60%' :
+                         level === '매우 혼잡' ? '100%' :
                          level === '약간 붐빔' ? '60%' : 
-                         level === '붐빔' ? '80%' : '100%',
+                         level === '붐빔' ? '80%' : 
+                         level === '매우 붐빔' ? '100%' : '50%',
                   boxShadow: '0 0 10px rgba(0,0,0,0.3)'
                 }}
               ></div>
@@ -296,11 +300,12 @@ function CrowdDetail() {
           {history && history.timeseries.length > 0 ? (
             <div className="space-y-2">
               {history.timeseries.slice().reverse().map((item, index) => {
-                const itemLevel = getCongestionLevelName(item.congestionLevel);
+                // 실제 혼잡도 레벨이 있으면 사용, 없으면 계산된 레벨 사용 (하위 호환성)
+                const itemLevel = item.actualCongestionLevel || getCongestionLevelName(item.congestionLevel);
                 
                 return (
-                  <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
-                    <div className="text-xs text-gray-500 w-32">
+                  <div key={index} className="flex items-center gap-2 md:gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                    <div className="text-xs text-gray-500 w-20 md:w-32 flex-shrink-0">
                       {new Date(item.timestamp).toLocaleString('ko-KR', {
                         month: 'short',
                         day: 'numeric',
@@ -308,23 +313,26 @@ function CrowdDetail() {
                         minute: '2-digit'
                       })}
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <div className="w-full bg-gray-200 rounded-full h-6 relative">
                         <div 
                           className={`${getCongestionColor(itemLevel)} h-6 rounded-full transition-all duration-300 flex items-center justify-start px-2`}
                           style={{ 
                             width: itemLevel === '한산' ? '20%' : 
-                                   itemLevel === '여유' ? '35%' : 
-                                   itemLevel === '보통' ? '50%' : 
-                                   itemLevel === '혼잡' ? '70%' : 
-                                   itemLevel === '매우 혼잡' ? '100%' : '50%'
+                                   itemLevel === '여유' ? '20%' : 
+                                   itemLevel === '보통' ? '40%' : 
+                                   itemLevel === '혼잡' ? '60%' : 
+                                   itemLevel === '매우 혼잡' ? '100%' :
+                                   itemLevel === '약간 붐빔' ? '60%' :
+                                   itemLevel === '붐빔' ? '80%' :
+                                   itemLevel === '매우 붐빔' ? '100%' : '50%'
                           }}
                         >
-                          <span className="text-xs font-semibold text-white drop-shadow">{itemLevel}</span>
+                          <span className="text-xs font-semibold text-white drop-shadow whitespace-nowrap">{itemLevel}</span>
                         </div>
                       </div>
                     </div>
-                    <div className="text-sm font-medium text-gray-700 w-28 text-right">
+                    <div className="text-sm font-medium text-gray-700 w-16 md:w-28 text-right flex-shrink-0">
                       {item.peopleCount.toLocaleString()}명
                     </div>
                   </div>

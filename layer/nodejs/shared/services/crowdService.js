@@ -8,6 +8,7 @@ class CrowdService {
   constructor() {
     this.redis = getRedisClient();
     this.ttlSeconds = 60*10; // 10분 TTL
+    this.historySaveInterval = 30 * 60 * 1000; // 30분 간격 (밀리초)
     this.baseUrl = process.env.SEOUL_POPULATION_API_URL || "http://openapi.seoul.go.kr:8088";
     this.apiKey = process.env.SEOUL_API_KEY || "47464b765073696c33366142537a7a";
     
@@ -37,6 +38,56 @@ class CrowdService {
   }
 
   /**
+   * 30분 지났는지 확인 (DynamoDB 저장 여부 결정)
+   */
+  async shouldSaveHistory(areaCode) {
+    const lastSaveKey = `history_last_save:${areaCode}`;
+    
+    try {
+      const lastSaveTime = await this.redis.safeGet(lastSaveKey);
+      
+      // 한 번도 저장 안 했으면 저장
+      if (!lastSaveTime) {
+        return true;
+      }
+      
+      const now = Date.now();
+      const lastSave = parseInt(lastSaveTime);
+      const elapsed = now - lastSave;
+      
+      // 30분(1800000ms) 지났는지 확인
+      if (elapsed >= this.historySaveInterval) {
+        return true;
+      }
+      
+      // 스킵 로그
+      const elapsedMinutes = Math.floor(elapsed / 1000 / 60);
+      console.log(`⏳ ${areaCode} 히스토리 저장 스킵 (${elapsedMinutes}분 경과, 30분 필요)`);
+      return false;
+      
+    } catch (error) {
+      console.error('shouldSaveHistory 에러:', error);
+      return false; // 에러 시 저장 안 함
+    }
+  }
+
+  /**
+   * 마지막 저장 시간 갱신
+   */
+  async updateLastSaveTime(areaCode) {
+    const lastSaveKey = `history_last_save:${areaCode}`;
+    const now = Date.now().toString();
+    
+    try {
+      // 저장 시간 기록 (24시간 TTL)
+      await this.redis.safeSetEx(lastSaveKey, 86400, now);
+      console.log(`✅ ${areaCode} 마지막 저장 시간 갱신`);
+    } catch (error) {
+      console.error('updateLastSaveTime 에러:', error);
+    }
+  }
+
+  /**
    * 특정 지역 코드 데이터 가져오기 및 캐싱
    */
   async fetchAndCacheOne(areaCode, saveHistory = false) {
@@ -59,9 +110,14 @@ class CrowdService {
       // Redis 캐싱
       await this.redis.safeSetEx(cacheKey, this.ttlSeconds, JSON.stringify(payload));
       
-      // 플래그가 true일 때만 DynamoDB에 히스토리 저장
+      // 히스토리 저장 (30분 간격 체크)
       if (saveHistory) {
-        await this.saveToHistory(payload);
+        const shouldSave = await this.shouldSaveHistory(areaCode);
+        
+        if (shouldSave) {
+          await this.saveToHistory(payload);
+          await this.updateLastSaveTime(areaCode);
+        }
       }
       
       return payload;
@@ -95,6 +151,8 @@ class CrowdService {
         congestionLevel,
         rawData: payload.data
       });
+      
+      console.log(`💾 ${payload.areaCode} 히스토리 저장 완료`);
     } catch (error) {
       // 히스토리 저장 실패해도 메인 기능에 영향 없도록 에러만 로그
       console.error(`❌ 히스토리 저장 실패 (${payload.areaCode}):`, error.message);
@@ -174,17 +232,17 @@ class CrowdService {
     for (let i = 0; i < toFetch.length; i += batchSize) {
       const batch = toFetch.slice(i, i + batchSize);
       const fetchPromises = batch.map(async (areaCode) => {
-      try {
-          const fresh = await this.fetchAndCacheOne(areaCode, true); // DynamoDB 히스토리 저장 활성화
+        try {
+          const fresh = await this.fetchAndCacheOne(areaCode, true); // DynamoDB 히스토리 저장 (30분 간격 체크)
           return fresh;
-      } catch (e) {
+        } catch (e) {
           return { 
-          areaCode,
-          error: e.message,
-          areaInfo: areaMapping.getAreaByCode(areaCode) || null
+            areaCode,
+            error: e.message,
+            areaInfo: areaMapping.getAreaByCode(areaCode) || null
           };
         }
-        });
+      });
       
       const batchResults = await Promise.all(fetchPromises);
       results.push(...batchResults);
@@ -210,7 +268,7 @@ class CrowdService {
       } catch (_) {}
     }
     
-    return await this.fetchAndCacheOne(areaCode);
+    return await this.fetchAndCacheOne(areaCode, true); // 30분 간격 체크
   }
 
   /**
@@ -256,4 +314,3 @@ class CrowdService {
 }
 
 module.exports = new CrowdService();
-

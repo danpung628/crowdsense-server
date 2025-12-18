@@ -55,7 +55,9 @@ export interface RankingItem {
 export interface HistoryTimeseries {
   timestamp: string | Date;
   peopleCount: number;
-  congestionLevel: number;
+  congestionLevel: number; // 계산된 레벨 (호환성 유지)
+  actualCongestionLevel?: string | null; // 실제 혼잡도 레벨 (한산, 여유, 보통, 혼잡, 매우 혼잡)
+  actualCongestionMessage?: string | null; // 실제 혼잡도 메시지
 }
 
 // 히스토리 API 응답

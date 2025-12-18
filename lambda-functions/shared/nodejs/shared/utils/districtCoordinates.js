@@ -38,16 +38,38 @@ function getDistrictCoordinates(district) {
 }
 
 /**
+ * 간단한 문자열 해시 함수 (결정론적)
+ */
+function simpleHash(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // 32bit 정수로 변환
+  }
+  return Math.abs(hash);
+}
+
+/**
  * 주차장 이름과 주소로 추정 좌표 생성
- * (구청 좌표 기준 + 랜덤 오프셋)
+ * (구청 좌표 기준 + 결정론적 오프셋)
+ * 같은 주차장은 항상 같은 좌표를 반환하도록 해시 기반으로 생성
  */
 function generateParkingCoordinates(district, parkingName, address) {
   const baseCoord = districtCoordinates[district];
   if (!baseCoord) return { lat: null, lng: null };
   
-  // 구 내에서 랜덤 오프셋 (약 ±2km 범위)
-  const latOffset = (Math.random() - 0.5) * 0.036; // 약 ±2km
-  const lngOffset = (Math.random() - 0.5) * 0.045; // 약 ±2km
+  // 주차장 이름과 주소를 조합하여 해시 생성
+  const seed = `${district}-${parkingName || ''}-${address || ''}`;
+  const hash = simpleHash(seed);
+  
+  // 해시를 0~1 사이 값으로 정규화
+  const normalizedHash1 = (hash % 10000) / 10000;
+  const normalizedHash2 = ((hash * 7) % 10000) / 10000; // 다른 시드
+  
+  // 구 내에서 결정론적 오프셋 (약 ±2km 범위)
+  const latOffset = (normalizedHash1 - 0.5) * 0.036; // 약 ±2km
+  const lngOffset = (normalizedHash2 - 0.5) * 0.045; // 약 ±2km
   
   return {
     lat: parseFloat((baseCoord.lat + latOffset).toFixed(6)),

@@ -1,5 +1,5 @@
-// lambda-functions/parking/list/index.mjs
-import parkingService from '/opt/nodejs/shared/services/parkingService.js';
+// lambda-functions/parking/list/index.js
+const parkingService = require('/opt/nodejs/shared/services/parkingService.js');
 function createResponse(statusCode, body) {
   return {
     statusCode,
@@ -30,7 +30,7 @@ function errorResponse(error) {
   };
 }
 
-export const handler = async (event, context) => {
+exports.handler = async (event, context) => {
   context.callbackWaitsForEmptyEventLoop = false;
 
   try {
